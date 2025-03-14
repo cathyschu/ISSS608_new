@@ -16,7 +16,7 @@ site/Take-home_Ex/Take-home_Ex02_files/figure-html/
 **/figure-html/
 **/*_files/figure-html/
 **/figure-html/
-**/*.html
+#**/*.html
 **/*.json
 **/*_files/
 
