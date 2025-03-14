@@ -1,0 +1,37 @@
+.Rproj.user
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+.quarto
+
+data/
+
+/.quarto/
+site/Hands-on*Ex/Hands-on_Ex08/Hands-on_Ex08_1.html
+site/Take-home_Ex/Take-home_Ex02_files/figure-html/
+**/figure-html/
+**/figure-html/
+**/*_files/figure-html/
+**/figure-html/
+**/*_files/figure-html/
+**/figure-html/
+**/*.html
+**/*.json
+**/*_files/
+
+# Additional large file types
+*.csv
+*.xlsx
+*.pptx
+*.docx
+*.pdf
+*.png
+*.jpg
+*.tiff
+*.zip
+*.tar.gz
+
+# R specific large files
+*.rds
+*.RData
