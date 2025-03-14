@@ -25,9 +25,9 @@ site/Take-home_Ex/Take-home_Ex02_files/figure-html/
 *.xlsx
 *.pptx
 *.docx
-*.pdf
-*.png
-*.jpg
+#*.pdf
+#*.png
+#*.jpg
 *.tiff
 *.zip
 *.tar.gz
