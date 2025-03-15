@@ -9,6 +9,9 @@ execute:
   freeze: true  
 ---
 
+
+
+
 # **Analytical Mapping**
 
 ## 1 Overview
@@ -25,23 +28,38 @@ execute:
 
 ### 2.1 Install and load packages
 
+
+
+
 ```{r}
 pacman::p_load(sf, tmap, tidyverse)
 ```
+
+
+
 
 ### 2.1 Import data to R
 
 For the purpose of this hands-on exercise, a prepared data set called *NGA_wp.rds* will be used. The data set is a polygon feature data.frame providing information on water point of Nigeria at the LGA level.
 
+
+
+
 ```{r}
 NGA_wp <- read_rds("data/rds/NGA_wp.rds")
 ```
+
+
+
 
 ## 3 Basic choropleth mapping
 
 ### 3.1 **Visualising distribution of non-functional water point**
 
 To plot a choropleth map showing the distribution of non-function water point by LGA
+
+
+
 
 ```{r}
 library(tmap)
@@ -69,6 +87,9 @@ tmap_arrange(p2, p1, nrow = 1)
 tmap_mode("plot") # Try explicitly setting the mode
 ```
 
+
+
+
 ## 4 **Choropleth Map for Rates**
 
 Water points are not equally distributed in space. That means that if we do not account for how many water points are somewhere, we end up mapping total water point size rather than our topic of interest.
@@ -77,15 +98,24 @@ Water points are not equally distributed in space. That means that if we do not 
 
 We will tabulate the proportion of functional water points and the proportion of non-functional water points in each LGA. In the following code chunk, `mutate(`) from **dplyr** package is used to derive two fields, namely *pct_functional* and *pct_nonfunctional*.
 
+
+
+
 ```{r}
 NGA_wp <- NGA_wp %>%
   mutate(pct_functional = wp_functional/total_wp) %>%
   mutate(pct_nonfunctional = wp_nonfunctional/total_wp)
 ```
 
+
+
+
 ### 4.5 **Plotting map of rate**
 
 Plot a choropleth map showing the distribution of percentage functional water point by LGA.
+
+
+
 
 ```{r}
 tm_shape(NGA_wp) +
@@ -99,6 +129,9 @@ tm_shape(NGA_wp) +
   tm_layout(main.title = "Rate map of functional water point by LGAs",
             legend.outside = TRUE)
 ```
+
+
+
 
 ## 5 **Extreme Value Maps**
 
@@ -114,12 +147,21 @@ The percentile map is a special type of quantile map with six specific categorie
 
 Step 1: Exclude records with NA by using the code chunk below.
 
+
+
+
 ```{r}
 NGA_wp <- NGA_wp %>%
   drop_na()
 ```
 
+
+
+
 Step 2: Creating customised classification and extracting values
+
+
+
 
 ```{r}
 percent <- c(0,.01,.1,.5,.9,.99,1)
@@ -127,6 +169,9 @@ var <- NGA_wp["pct_functional"] %>%
   st_set_geometry(NULL)
 quantile(var[,1], percent)
 ```
+
+
+
 
 ::::: goals
 ::: goals-header
@@ -162,6 +207,9 @@ Firstly, we will write an R function as shown below to extract a variable (i.e.Â
 
     -   v: vector with values (without a column name)
 
+
+
+
 ```{r}
 get.var <- function(vname,df) {
   v <- df[vname] %>% 
@@ -171,9 +219,15 @@ get.var <- function(vname,df) {
 }
 ```
 
+
+
+
 #### **5.1.4 A percentile mapping function**
 
 Next, we will write a percentile mapping function by using the code chunk below.
+
+
+
 
 ```{r}
 #| code-fold: true
@@ -205,17 +259,29 @@ percentmap <- function(vnam, df, legtitle=NA, mtitle="Percentile Map"){
 }
 ```
 
+
+
+
 #### **5.1.5 Test drive the percentile mapping function**
 
 Run function:
+
+
+
 
 ```{r}
 percentmap("total_wp", NGA_wp)
 ```
 
+
+
+
 ### 5.2 **Box map**
 
 In essence, a box map is an augmented quartile map, with an additional lower and upper category. When there are lower outliers, then the starting point for the breaks is the minimum value, and the second break is the lower fence. In contrast, when there are no lower outliers, then the starting point for the breaks will be the lower fence, and the second break is the minimum value (there will be no observations that fall in the interval between the lower fence and the minimum value).
+
+
+
 
 ```{r}
 #| fig-width: 4
@@ -225,6 +291,9 @@ ggplot(data = NGA_wp,
            y = wp_nonfunctional)) +
   geom_boxplot()
 ```
+
+
+
 
 ::::: goals
 ::: goals-header
@@ -251,6 +320,9 @@ The code chunk below is an R function that creating break points for a box map.
 -   returns:
 
     -   bb: vector with 7 break points compute quartile and fences
+
+
+
 
 ```{r}
 #| code-fold: true
@@ -282,6 +354,9 @@ boxbreaks <- function(v,mult=1.5) {
 }
 ```
 
+
+
+
 #### **5.2.2 Creating the get.var function**
 
 The code chunk below is an R function to extract a variable as a vector out of an sf data frame.
@@ -296,6 +371,9 @@ The code chunk below is an R function to extract a variable as a vector out of a
 
     -   v: vector with values (without a column name)
 
+
+
+
 ```{r}
 get.var <- function(vname,df) {
   v <- df[vname] %>% st_set_geometry(NULL)
@@ -304,14 +382,23 @@ get.var <- function(vname,df) {
 }
 ```
 
+
+
+
 #### **5.2.3 Test drive the newly created function**
 
 Letâ€™s test the newly created function.
+
+
+
 
 ```{r}
 var <- get.var("wp_nonfunctional", NGA_wp) 
 boxbreaks(var)
 ```
+
+
+
 
 #### **5.2.4 Boxmap function**
 
@@ -328,6 +415,9 @@ The code chunk below is an R function to create a box map.
 -   returns:
 
     -   a tmap-element (plots a map)
+
+
+
 
     ```{r}
     #| code-fold: true
@@ -365,6 +455,10 @@ tmap_mode("plot")
 boxmap("wp_nonfunctional", NGA_wp)
 ```
 
+
+
+
 ## Reference
 
 Kam, T. S. (2023, December 4). *R for Visual Analytics*. <https://r4va.netlify.app/>
+
