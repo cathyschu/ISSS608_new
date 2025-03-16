@@ -285,7 +285,7 @@ Learn from *tm_polygons()*
 
 ::: goals-container
 -   The default interval binning used to draw the choropleth map is called “pretty”. A detailed discussion of the data classification methods supported by **tmap** will be provided in sub-section 4.3.
--   The default colour scheme used is `YlOrRd` of ColorBrewer. You will learn more about the color scheme in sub-section 4.4.
+-   The default colour scheme used is `YlOrRd` of ColorBrewer. We will learn more about the color scheme in sub-section 4.4.
 -   By default, Missing value will be shaded in grey.
 :::
 :::::
