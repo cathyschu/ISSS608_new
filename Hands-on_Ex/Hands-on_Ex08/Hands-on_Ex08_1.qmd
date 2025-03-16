@@ -379,7 +379,7 @@ tm_shape(mpsz_pop2020)+
           n = 5,
           style = "pretty",
           palette = "Greens") +
-  tm_borders(alpha = 0.5)
+  tm_borders(alpha = 0.3)
 
 ```
 
@@ -393,7 +393,7 @@ tm_shape(mpsz_pop2020)+
           n = 5,
           style = "sd",
           palette = "Greens") +
-  tm_borders(alpha = 0.5)
+  tm_borders(alpha = 0.3)
 
 ```
 
@@ -407,7 +407,7 @@ tm_shape(mpsz_pop2020)+
           n = 2,
           style = "jenks",
           palette = "Oranges") +
-  tm_borders(alpha = 0.5)
+  tm_borders(alpha = 0.3)
 
 ```
 
@@ -419,7 +419,7 @@ tm_shape(mpsz_pop2020)+
           n = 6,
           style = "jenks",
           palette = "Oranges") +
-  tm_borders(alpha = 0.5)
+  tm_borders(alpha = 0.3)
 ```
 
 ## n=10
@@ -430,7 +430,7 @@ tm_shape(mpsz_pop2020)+
           n = 10,
           style = "jenks",
           palette = "Oranges") +
-  tm_borders(alpha = 0.5)
+  tm_borders(alpha = 0.3)
 ```
 :::
 
@@ -471,7 +471,7 @@ tm_shape(mpsz_pop2020)+
   tm_fill("DEPENDENCY",
           n = 6,
           style = "quantile",
-          palette = "Reds") +
+          palette = "brewer.Oranges") +
   tm_borders(alpha = 0.5)
 ```
 
@@ -484,7 +484,7 @@ tm_shape(mpsz_pop2020)+
   tm_fill("DEPENDENCY",
           n = 6,
           style = "quantile",
-          palette = "-Reds") +
+          palette = "-brewer.Oranges") +
   tm_borders(alpha = 0.5)
 ```
 
@@ -505,7 +505,7 @@ In **tmap**, several *legend* options are provided to change the placement, form
 tm_shape(mpsz_pop2020)+
   tm_fill("DEPENDENCY", 
           style = "jenks", 
-          palette = "Purples", 
+          values = "brewer.YlOrRd", 
           legend.hist = TRUE, 
           legend.is.portrait = TRUE,
           legend.hist.z = 0.1) +
@@ -544,22 +544,25 @@ Beside map style, **tmap** also also provides arguments to draw other map furnit
 In the code chunk below, *tm_compass()*, *tm_scale_bar()* and *tm_grid()* are used to add compass, scale bar and grid lines onto the choropleth map.
 
 ```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
 tm_shape(mpsz_pop2020)+
-  tm_fill("DEPENDENCY", 
-          style = "quantile", 
-          palette = "Blues",
-          title = "No. of persons") +
-  tm_layout(main.title = "Distribution of Dependency Ratio \nby planning subzone",
-            main.title.position = "center",
-            main.title.size = 1.2,
-            legend.height = 0.45, 
-            legend.width = 0.35,
-            frame = TRUE) +
-  tm_borders(alpha = 0.5) +
+  tm_polygons(fill = "DEPENDENCY", 
+              fill.scale = tm_scale_intervals(
+                style = "quantile",
+                n = 5,
+                values = "brewer.blues"),
+                fill.legend = tm_legend(
+                title = "Dependency ratio"),
+              col = "#f1f4f5") +
+  tm_title("Distribution of Dependency Ratio by planning subzone") +
+  tm_layout(frame = TRUE,
+            bg.color = "#f1f4f5") +
+  tm_borders(fill_alpha = 0.5) +
+  tm_basemap(server = NULL) +
   tm_compass(type="8star", size = 2) +
-  tm_scale_bar() +  # Use default parameters instead of specifying width
-  tm_grid(lwd = 0.1, alpha = 0.2) +
-  tm_credits("Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA)\n and Population data from Department of Statistics DOS", 
+  tm_grid(alpha =0.2) +
+  tm_credits("Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA) and Population data from Department of Statistics DOS", 
              position = c("left", "bottom"))
 ```
 
@@ -584,23 +587,63 @@ In **tmap**, small multiple maps can be plotted in three ways:
 Small multiple choropleth maps are created by defining ***ncols*** in **tm_fill()**
 
 ```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
 tm_shape(mpsz_pop2020)+
   tm_fill(c("YOUNG", "AGED"),
           style = "equal", 
           palette = "brewer.blues") +
   tm_layout(legend.position = c("right", "bottom"),
-            legend.width = 5,         # Controls the width of legend
-            legend.height = 6,        # Controls the height of legend
-            legend.text.size = 0.7,      # Makes the text in the legend smaller
+            legend.width = 5, 
+            legend.height = 6,        
+            legend.text.size = 0.7,      
             legend.title.size = 0.5,
             legend.frame = FALSE,
-            frame.col = "grey") + 
+            frame.col = "grey",
+            bg.color = "#f1f4f5") + 
   tm_borders(alpha = 0.5) +
   tmap_style("white")
 ```
 
 small multiple choropleth maps are created by assigning multiple values to at least one of the aesthetic arguments.
 
+
+**Below maps are plotted using different versions of tmap. For some reason, v4 isn't able to show another color, other than blue.**
+
+::: panel-tabset
+
+## v4
+
+```{r}
+#| code-fold: TRUE
+#| code-summary: "Show the code"
+map1 <- tm_shape(mpsz_pop2020) + 
+  tm_polygons("DEPENDENCY", 
+          style = "equal", 
+          values = "matplotlib.Blues",
+          title = "Dependency") +
+  tm_borders() +
+  tm_layout(legend.position = c("right", "bottom"),
+            legend.frame = FALSE,
+            frame.lwd = 0.5,
+            frame.col = "grey")
+
+map2 <- tm_shape(mpsz_pop2020) + 
+  tm_polygons("AGED", 
+          style = "quantile", 
+          values = "matplotlib.Greens",
+          title = "Aged") +
+  tm_borders() +
+  tm_layout(legend.position = c("right", "bottom"),
+            legend.frame = FALSE,
+            frame.lwd = 0.5,
+            frame.col = "grey")
+
+tmap_arrange(map1, map2)
+```
+
+
+## v3
 ```{r}
 #| code-fold: TRUE
 #| code-summary: "Show the code"
@@ -628,6 +671,7 @@ map2 <- tm_shape(mpsz_pop2020) +
 
 tmap_arrange(map1, map2)
 ```
+:::
 
 #### **4.6.2 By defining a group-by variable in *tm_facets()***
 
