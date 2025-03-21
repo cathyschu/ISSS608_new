@@ -7,7 +7,7 @@ website:
   title: ""
   page-footer: "Made with 💚 and Quarto"
   announcement:
-    content: "**NEW (08/03)** - [**Hands-on Exercise 8**](https://cathyc.netlify.app/honds-on_ex/hands-on_ex08_1) are published!"
+    content: "**NEW (21/03)** - [**Hands-on Exercise 9**](https://cathyc.netlify.app/hands-on_ex09/hands-on_ex09) are published!"
     position: below-navbar
     icon: rocket-takeoff-fill
     
@@ -58,8 +58,8 @@ website:
         href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_2.qmd
       - text: "Hands-on Exercise 8-3"
         href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_3.qmd
-      # - text: "Hands-on Exercise 9"
-      #   href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.qmd
+      - text: "9 Modelling, Visualising and Analysing Network Data with R"
+        href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.qmd
     - text: "**In-class Exercise**"
       menu:
       - text: "In-class Exercise 1"
@@ -131,6 +131,8 @@ website:
             href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_2.qmd
           - text: "Hands-on Exercise 8-3"
             href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_3.qmd
+          - text: "Hands-on Exercise 9"
+            href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.qmd            
             
       - section: "In-class Exercise"
         contents:
