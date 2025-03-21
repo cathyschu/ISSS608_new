@@ -35,13 +35,42 @@ The data sets used in this hands-on exercise is from an oil exploration and extr
 
 ### 3.1 The edges data
 
--   *GAStech-email_edges.csv* which consists of two weeks of 9063 emails correspondances between 55 employees.
+*GAStech-email_edges.csv* which consists of two weeks of 9063 emails correspondances between 55 employees.
 
 ### 3.2 The nodes data
 
+*GAStech_email_nodes.csv* which consist of the names, department and title of the 55 employees.
+
 ### 3.3 Importing network data from files
 
+import *GAStech_email_node.csv* and *GAStech_email_edges-v2.csv* into RStudio environment by using `read_csv()` of **readr** package.
+
+```{r}
+pacman::p_load(readr, dplyr)
+```
+
+```{r}
+GAStech_nodes <- read_csv("data/GAStech_email_node.csv")
+GAStech_edges <- read_csv("data/GAStech_email_edge-v2.csv")
+```
+
 ### 3.4 Reviewing the imported data
+
+Next, we examine the structure of the data frame using *glimpse()* of **dplyr**.
+
+```{r}
+glimpse(GAStech_edges)
+```
+
+::::: goals
+::: goals-header
+Note
+:::
+
+::: goals-container
+The output report of GAStech_edges above reveals that the *SentDate* is treated as “Character” data type instead of *date* data type. It is important to change the data type of *SentDate* field back to “Date”” data type.
+:::
+:::::
 
 ### 3.5 Wrangling time
 
