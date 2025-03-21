@@ -46,7 +46,7 @@ The data sets used in this hands-on exercise is from an oil exploration and extr
 import *GAStech_email_node.csv* and *GAStech_email_edges-v2.csv* into RStudio environment by using `read_csv()` of **readr** package.
 
 ```{r}
-pacman::p_load(readr, dplyr)
+pacman::p_load(readr, dplyr, lubridate)
 ```
 
 ```{r}
@@ -74,7 +74,34 @@ The output report of GAStech_edges above reveals that the *SentDate* is treated 
 
 ### 3.5 Wrangling time
 
+```{r}
+GAStech_edges <- GAStech_edges %>%
+  mutate(SendDate = dmy(SentDate)) %>%
+  mutate(Weekday = wday(SentDate,
+                        label = TRUE,
+                        abbr = FALSE))
+```
+
+::::: goals
+::: goals-header
+Learn from the code
+:::
+
+::: goals-container
+-   both *dmy()* and *wday()* are functions of **lubridate** package. [lubridate](https://r4va.netlify.app/cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html) is an R package that makes it easier to work with dates and times.
+-   *dmy()* transforms the SentDate to Date data type.
+-   *wday()* returns the day of the week as a decimal number or an ordered factor if label is TRUE. The argument abbr is FALSE keep the daya spells in full, i.e. Monday. The function will create a new column in the data.frame i.e. Weekday and the output of *wday()* will save in this newly created field.
+-   the values in the *Weekday* field are in ordinal scale.
+
+:::
+:::::
+
 ### 3.6 Reviewomg the revised date fields
+Table below shows the data structure of the reformatted GAStech_edges data frame.
+
+```{r, echo=FALSE}
+glimpse(GAStech_edges)
+```
 
 ### 3.7 Wrangling attributes
 
