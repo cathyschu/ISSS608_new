@@ -13,12 +13,7 @@ execute:
 
 ## 1 Overview
 
-Learning objectives include the following:
--   create graph object data frames, manipulate them using appropriate functions of *dplyr, lubridate, and tidygraph.*
--   build network graph visualisation using appropriate function of ***ggraph***
--   compute network geometrics using ***tidygraph***
--   build advanced gragh visualisation by incorporating the network ***geometrics***
--   build interactive network visualisation using ***visNetwork*** package
+Learning objectives include the following: - create graph object data frames, manipulate them using appropriate functions of *dplyr, lubridate, and tidygraph.* - build network graph visualisation using appropriate function of ***ggraph*** - compute network geometrics using ***tidygraph*** - build advanced gragh visualisation by incorporating the network ***geometrics*** - build interactive network visualisation using ***visNetwork*** package
 
 ## 2 Getting started
 
@@ -647,4 +642,5 @@ visNetwork(GAStech_nodes,
 ```
 
 ## 9 Reference
+
 Kam, T. S. (2023, December 4). R for Visual Analytics. https://r4va.netlify.app/
