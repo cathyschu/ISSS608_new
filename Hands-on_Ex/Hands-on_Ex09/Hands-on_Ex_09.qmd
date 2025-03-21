@@ -237,6 +237,7 @@ ggraph(GAStech_graph) +
   geom_edge_link() +
   geom_node_point()
 ```
+
 ::::: goals
 ::: goals-header
 Laern from code
@@ -247,14 +248,79 @@ Laern from code
 :::
 :::::
 
-
 ### 5.2 **Changing the default network graph theme**
+
+In this section, you will use [*theme_graph()*](https://ggraph.data-imaginist.com/reference/theme_graph.html) to remove the x and y axes.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+g <- ggraph(GAStech_graph) + 
+  geom_edge_link(aes()) +
+  geom_node_point(aes())
+
+g + theme_graph(background = "#f1f4f5")
+```
+
+::::: goals
+::: goals-header
+Learn from the code
+:::
+
+::: goals-container
+:::
+
+-   **ggraph** introduces a special ggplot theme that provides better defaults for network graphs than the normal ggplot defaults. `theme_graph()`, besides removing axes, grids, and border, changes the font to Arial Narrow (this can be overridden).
+-   The ggraph theme can be set for a series of plots with the `set_graph_style()` command run before the graphs are plotted or by using `theme_graph()` in the individual plots.
+:::::
 
 ### 5.3 **Changing the coloring of the plot**
 
+`theme_graph()` makes it easy to change the coloring of the plot.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+g <- ggraph(GAStech_graph) + 
+  geom_edge_link(aes(colour = 'grey50', size = 0.4)) +
+  geom_node_point(aes(colour = 'grey40'))
+
+g + theme_graph(background = 'grey10',
+                text_colour = 'white')
+```
+
 ### 5.4 **Working with ggraph’s layouts**
 
+**ggraph** support many layout for standard used, they are: star, circle, nicely (default), dh, gem, graphopt, grid, mds, spahere, randomly, fr, kk, drl and lgl. Figures below and on the right show layouts supported by `ggraph()`.
+
+![](images/image4.jpg){fig-align="centre" width="600"}
+
+![](images/image5.jpg){fig-align="centre" width="600"}
+
 ### 5.5 **Fruchterman and Reingold layout**
+
+Below plot the network graph using **Fruchterman and Reingold layout**.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+g <- ggraph(GAStech_graph, 
+            layout = "fr") +
+  geom_edge_link(aes()) +
+  geom_node_point(aes())
+
+g + theme_graph(background = "#f1f4f5")
+```
+::::: goals
+::: goals-header
+Laern from code
+:::
+
+::: goals-container
+-   *layout* argument is used to define the layout to be used.
+:::
+:::::
+
 
 ### 5.6 **Modifying network nodes**
 
