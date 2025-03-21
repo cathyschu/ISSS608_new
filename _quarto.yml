@@ -59,7 +59,7 @@ website:
       - text: "Hands-on Exercise 8-3"
         href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_3.qmd
       - text: "9 Modelling, Visualising and Analysing Network Data with R"
-        href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.qmd
+        href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex_09.qmd
     - text: "**In-class Exercise**"
       menu:
       - text: "In-class Exercise 1"
@@ -132,7 +132,7 @@ website:
           - text: "Hands-on Exercise 8-3"
             href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_3.qmd
           - text: "Hands-on Exercise 9"
-            href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.qmd            
+            href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex_09.qmd            
             
       - section: "In-class Exercise"
         contents:
