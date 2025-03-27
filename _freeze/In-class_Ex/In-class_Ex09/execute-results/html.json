@@ -1,0 +1,15 @@
+{
+  "hash": "fd73563219deaf1a1cb34a24645a679d",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"In-class_Ex09\"\nauthor: \"Cathy C.\"\ndate-modified: \"last-modified\" \nexecute:\n  echo: true \n  eval: true \n  warning: false \n  freeze: true  \n---\n\n::: {.cell}\n\n```{.r .cell-code}\npacman::p_load(tidygraph,igraph, ggraph, visNetwork, lubridate,\n              clock, tidyverse, graphlayouts)\n\n#clock: takes care of time\n```\n:::\n\n\n\n\n## The Data\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nGAStech_nodes <- read_csv(\"data/GAStech_email_node.csv\")\nGAStech_edges <- read_csv(\"data/GAStech_email_edge-v2.csv\")\n```\n:::\n\n\n\n\nTwo checks: \n-   all date and time should be numerical fields.\n-   sentDate is not clear. it is now character type.\n\n## Data Wrangling\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nGAStech_edges <- GAStech_edges %>%\n  mutate(SendDate = dmy(SentDate)) %>% #send vs sent\n  mutate(Weekday = wday(SentDate, # Derive weekday field\n                        label = TRUE,\n                        abbr = FALSE))\n```\n:::\n\n\n\n\n## Wrangling attributes (edges)\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nGAStech_edges_aggregated <- GAStech_edges %>%\n  filter(MainSubject == \"Work related\") %>%\n  group_by(source, target, Weekday) %>%\n    summarise(Weight = n()) %>%\n  filter(source!=target) %>% # Filter sel away\n  filter(Weight > 1) %>%\n  ungroup()\n```\n:::\n\n\n\n## Using tbl_graph() to build tidygraph data model\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(ggraph)\nlibrary(igraph)\nlibrary(tidygraph)\nGAStech_graph <- tbl_graph(nodes = GAStech_nodes,\n                           edges = GAStech_edges_aggregated, \n                           directed = TRUE)\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,49 @@
+---
+title: "In-class_Ex09"
+author: "Cathy C."
+date-modified: "last-modified" 
+execute:
+  echo: true 
+  eval: true 
+  warning: false 
+  freeze: true  
+---
+
+```{r}
+pacman::p_load(tidygraph,igraph, ggraph, visNetwork, lubridate,
+              clock, tidyverse, graphlayouts)
+
+#clock: takes care of time
+
+```
+
+## The Data
+```{r}
+GAStech_nodes <- read_csv("data/GAStech_email_node.csv")
+GAStech_edges <- read_csv("data/GAStech_email_edge-v2.csv")
+```
+
+Two checks: 
+-   all date and time should be numerical fields.
+-   sentDate is not clear. it is now character type.
+
+## Data Wrangling
+```{r}
+GAStech_edges <- GAStech_edges %>%
+  mutate(SendDate = dmy(SentDate)) %>% #send vs sent
+  mutate(Weekday = wday(SentDate, # Derive weekday field
+                        label = TRUE,
+                        abbr = FALSE))
+```
+
+## Wrangling attributes (edges)
+```{r}
+GAStech_edges_aggregated <- GAStech_edges %>%
+  filter(MainSubject == "Work related") %>%
+  group_by(source, target, Weekday) %>%
+    summarise(Weight = n()) %>%
+  filter(source!=target) %>% # Filter sel away
+  filter(Weight > 1) %>%
+  ungroup()
+```
+
