@@ -215,6 +215,8 @@ product %>%
 Before we can prepare the sales report by product by using gtExtras functions, code chunk below will be used to prepare the data.
 
 ```{r}
+#| code-fold: true
+#| code-summary: "Show code"
 report <- coffeechain %>%
   mutate(Year = year(Date)) %>%
   filter(Year == "2013") %>%
