@@ -60,6 +60,8 @@ website:
         href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_3.qmd
       - text: "9 Modelling, Visualising and Analysing Network Data with R"
         href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex_09.qmd
+      - text: "10 MInformation Dashboard Design: R methods"
+        href: Hands-on_Ex/Hands-on_Ex10/Hands-on_Ex_10.qmd  
         
     - text: "**In-class Exercise**"
       menu:
@@ -135,7 +137,9 @@ website:
           - text: "Hands-on Exercise 8-3"
             href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08_3.qmd
           - text: "Hands-on Exercise 9"
-            href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex_09.qmd            
+            href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex_09.qmd
+          - text: "Hands-on Exercise 10"
+            href: Hands-on_Ex/Hands-on_Ex10/Hands-on_Ex_10.qmd  
             
       - section: "In-class Exercise"
         contents:
