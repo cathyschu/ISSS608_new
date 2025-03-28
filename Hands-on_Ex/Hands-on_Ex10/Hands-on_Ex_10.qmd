@@ -237,7 +237,10 @@ Note
 One of the requirement of gtExtras functions is that almost exclusively they require you to pass data.frame with list columns. In view of this, code chunk below will be used to convert the report data.frame into list columns.
 :::
 :::::
+
 ```{r}
+#| code-fold: true
+#| code-summary: "Show code"
 report %>%
   group_by(Product) %>%
   summarize('Monthly Sales' = list(Sales), 
@@ -246,13 +249,258 @@ report %>%
 
 ### 7.1 Plot Coffechain sales report
 
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+report %>%
+  group_by(Product) %>%
+  summarize('Monthly Sales' = list(Sales), 
+            .groups = "drop") %>%
+   gt() %>%
+   gt_plt_sparkline('Monthly Sales',
+                    same_limit = FALSE)
+```
+
 ### 7.2 Add statistics
+
+First, calculate summary statistics.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+report %>% 
+  group_by(Product) %>% 
+  summarise("Min" = min(Sales, na.rm = T),
+            "Max" = max(Sales, na.rm = T),
+            "Average" = mean(Sales, na.rm = T)
+            ) %>%
+  gt() %>%
+  fmt_number(columns = 4,
+    decimals = 2)
+```
 
 ### 7.3 Combine the data.frame
 
+Next, we will add the statistics to the table.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+spark <- report %>%
+  group_by(Product) %>%
+  summarize('Monthly Sales' = list(Sales), 
+            .groups = "drop")
+
+sales <- report %>% 
+  group_by(Product) %>% 
+  summarise("Min" = min(Sales, na.rm = T),
+            "Max" = max(Sales, na.rm = T),
+            "Average" = mean(Sales, na.rm = T)
+            )
+sales_data = left_join(sales, spark)
+```
+
 ### 7.4 Plot the updated data.table
 
+Now the plot has combined salse report and stats.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+sales_data %>%
+  gt() %>%
+  gt_plt_sparkline('Monthly Sales',
+                   same_limit = FALSE)
+```
+
 ### 7.5 Combine bullet chart and sparklines
+
+Similarly, we can combining the bullet chart and sparklines using the steps below.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+bullet <- coffeechain %>%
+  filter(Date >= "2013-01-01") %>%
+  group_by(`Product`) %>%
+  summarise(`Target` = sum(`Budget Sales`),
+            `Actual` = sum(`Sales`)) %>%
+  ungroup()
+
+sales_data = sales_data %>%
+  left_join(bullet)
+
+sales_data %>%
+  gt() %>%
+  gt_plt_sparkline('Monthly Sales') %>%
+  gt_plt_bullet(column = Actual, 
+                target = Target, 
+                width = 28,
+                palette = c("lightblue", 
+                          "black")) %>%
+  gt_theme_538()
+```
+
+## 8 Interactive Information Dashboard Design: reactable and reactablefmtr methods
+
+We will create interactive information dashboard by using [reactable](https://glin.github.io/reactable/index.html) and [reactablefmtr](https://kcuilla.github.io/reactablefmtr/index.html) packages. In order to build an interactive sparklines, we need to install dataui R package by using the code chunk below.
+
+```{r}
+remotes::install_github("timelyportfolio/dataui")
+```
+
+Next, we will load the package onto R environment by using the code chunk below.
+
+```{r}
+library(dataui)
+```
+
+### 8.1 Plotting interactive sparklines
+
+Similar to gtExtras, to plot an interactive sparklines by using reactablefmtr package we need to prepare the list field.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+report <- report %>%
+  group_by(Product) %>%
+  summarize(`Monthly Sales` = list(Sales))
+```
+
+Next, [react_sparkline](https://kcuilla.github.io/reactablefmtr/reference/react_sparkline.html) will be to plot the sparklines as shown below.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+reactable(
+  report,
+  columns = list(
+    Product = colDef(maxWidth = 200),
+    `Monthly Sales` = colDef(
+      cell = react_sparkline(report)
+    )
+  )
+)
+```
+
+### 8.2 Changing the pagesize
+
+By default the pagesize is 10. In the code chunk below, arguments defaultPageSize is used to change the default setting.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+reactable(
+  report,
+  defaultPageSize = 13,
+  columns = list(
+    Product = colDef(maxWidth = 180),
+    `Monthly Sales` = colDef(
+      cell = react_sparkline(report)
+    )
+  )
+)
+```
+
+### 8.3 Adding points and labels
+
+In the code chunk below `highlight_points` argument is used to show the **minimum** and **maximum** values points and `label` argument is used to label first and last values.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+reactable(
+  report,
+  defaultPageSize = 13,
+  columns = list(
+    Product = colDef(maxWidth = 200),
+    `Monthly Sales` = colDef(
+      cell = react_sparkline(
+        report,
+        highlight_points = highlight_points(
+          min = "red", max = "blue"),
+        labels = c("first", "last")
+        )
+    )
+  )
+)
+```
+
+### 8.4 Adding reference line
+
+Use `statline` argument is used to show the **mean line.**
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+reactable(
+  report,
+  defaultPageSize = 13,
+  columns = list(
+    Product = colDef(maxWidth = 180),
+    `Monthly Sales` = colDef(
+      minWidth = 250,
+      cell = react_sparkline(
+        report,
+        highlight_points = highlight_points(
+          min = "red", max = "blue"),
+        statline = "mean"
+        )
+    )
+  )
+)
+```
+
+### 8.5 Adding bandline
+
+Instead adding reference line, bandline can be added by using the `bandline` argument.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+reactable(
+  report,
+  defaultPageSize = 13,
+  columns = list(
+    Product = colDef(maxWidth = 200),
+    `Monthly Sales` = colDef(
+      cell = react_sparkline(
+        report,
+        highlight_points = highlight_points(
+          min = "red", max = "blue"),
+        line_width = 1,
+        bandline = "innerquartiles",
+        bandline_color = "green"
+        )
+    )
+  )
+)
+```
+
+### 8.6 Changing from sparkline to sparkbar
+
+Instead of displaying the values as sparklines, we can display them as sparkbars as shiwn below.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+reactable(
+  report,
+  defaultPageSize = 13,
+  columns = list(
+    Product = colDef(maxWidth = 200),
+    `Monthly Sales` = colDef(
+      cell = react_sparkbar(
+        report,
+        highlight_bars = highlight_bars(
+          min = "red", max = "blue"),
+        bandline = "innerquartiles",
+        statline = "mean")
+    )
+  )
+)
+```
+
 ## 9 Reference
 
 Kam, T. S. (2023, December 4). R for Visual Analytics. https://r4va.netlify.app/
