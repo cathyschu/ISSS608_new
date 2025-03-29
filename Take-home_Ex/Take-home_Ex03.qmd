@@ -9,8 +9,148 @@ execute:
   warning: false 
   freeze: true  
 ---
-To evaluate and determine the necessary R packages needed for your Shiny application are supported in R CRAN,
-To prepare and test the specific R codes can be run and returned the correct output as expected,
-To determine the parameters and outputs that will be exposed on the Shiny applications, and
-To select the appropriate Shiny UI components for exposing the parameters determine above.
+
+Check take-home 3 notes to include the key points
+
+## 1. Overview
+
+Brief overview of the application's purpose and key features
+Summary of prototyping process and results
+Key findings and recommendations for full development
+
+## 2. R Package Evaluation
+
+Selected Packages and Justification
+
+Network visualization packages: igraph, visNetwork
+Data manipulation: dplyr, tidyr
+Shiny components: shiny, shinydashboard
+Community detection: igraph algorithms
+Interactive tables: DT
+Date handling: lubridate
+
+
+## 3. Dataset & Initial EDA
+
+Data import and cleaning procedures
+Network structure transformation methods
+- Consider showing concrete code examples of how you transform the raw procurement data into network format.
+Testing results with sample procurement data
+
+
+# 4 Module design
+
+## 4.1 Network Visualization Overview sub-Module
+*What I discovered about the network structure*
+
+### 4.1.1 Data preparation
+
+### 4.1.2 Network Visualization Module Architecture
+*Node-Edge Structure Creation*
+Agencies and suppliers are represented as nodes
+Procurement contracts form edges between them
+Node types are visually distinguished (agencies as diamonds, suppliers as circles)
+
+*Visual Design* 
+Functionality and interactivity
+Shiny UI component selection (parameters)
+- Filter components (dateRangeInput, selectInput, etc.)
+- Control components (buttons, sliders, checkboxes)
+- Advanced input handling (typeahead search, conditional inputs)
+
+
+Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
+
+Below is the outputs (code and show)
+1. Main network visualization
+(test & show case the following)
+- Interactive Elements (Selection, Hover, Zoom)
+- Edge thickness prototype
+- Network layout algorithms prototype
+- Size nodes by degree centrality
+- Performance mode
+
+2. Network details (Metrics table)
+- Show case the table - Agency, suppliers, top contracts 
+
+3. Ego Network Extraction and Visualization
+- Focal Node Highlighting (showcase the shape)
+- Connected Nodes Identification ()
+- Edge Filtering Logic
+
+4. Ego network Data Tables and Metrics Components
+
+
+*Parameter Control Design*
+Filtering Controls Implementation
+- Date Range Selection
+- Entity Selection (Agencies, Suppliers)
+- Category and Amount Filters
+
+Visualization Controls Implementation
+- Layout Selection
+- Node Sizing Options
+- Edge Weight Representation
+- Performance Optimization Controls
+
+(Maybe)
+### 4.1.3 Exploratory Analysis Findings
+
+Network Structure Insights
+Agency-Supplier Relationship Patterns
+Temporal Patterns in Procurement Networks
+Key Metrics and Their Distribution
+Layout Comparison Effects on Network Interpretation
+
+
+
+### 4.2 Community Detection sub-Module
+
+*Visual Design* 
+Functionality and interactivity
+Shiny UI component selection (parameters)
+- Filter components (dateRangeInput, selectInput, etc.)
+- Control components (buttons, sliders, checkboxes)
+- Advanced input handling (typeahead search, conditional inputs)
+Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
+
+Below is the outputs (code and show)
+1. Community network (comparing & different parameter)
+
+2. Community metrics
+
+3. Community ego network (comparing & different parameter)
+
+4. Ego metrics
+
+
+
+R Code Preparation and Testing:
+Algorithm implementation and comparison
+Community visualization approaches
+Performance testing with varying network sizes
+
+Parameters and Outputs Specification:
+Filtering parameters (date range, agency type/name, supplier, tender type)
+Visualization control parameters (layout, node size, edge weight)
+Analysis parameters (metrics, thresholds, community detection method)
+
+Application Outputs:
+Network visualizations (main network, ego network, community view)
+Data tables and metrics (network summary, node metrics, community statistics)
+Interactive elements (node selection, tooltips, export options)
+
+Parameter-Output Relationships:
+How each parameter affects the visualizations and analysis
+Reactive dependency structure
+
+
+
+
+
+## 6. Storyboard / UI design
+
+
+## 7. Next steps
+
 
