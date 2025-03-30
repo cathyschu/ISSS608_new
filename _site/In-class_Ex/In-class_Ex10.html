@@ -6,10 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Cathy Chu">
-<meta name="dcterms.date" content="2025-03-30">
+<meta name="author" content="Cathy C.">
 
-<title>Take-home_Ex03</title>
+<title>In-class_Ex10</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,40 +20,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -284,7 +249,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Take-home_Ex03</li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">In-class_Ex10</li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -536,24 +501,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#track-singapore-public-dollars-with-network-dashboards" id="toc-track-singapore-public-dollars-with-network-dashboards" class="nav-link active" data-scroll-target="#track-singapore-public-dollars-with-network-dashboards">Track Singapore Public Dollars with Network Dashboards</a>
-  <ul class="collapse">
-  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">1. Overview</a></li>
-  <li><a href="#r-package-evaluation" id="toc-r-package-evaluation" class="nav-link" data-scroll-target="#r-package-evaluation">2. R Package Evaluation</a></li>
-  <li><a href="#dataset-initial-eda" id="toc-dataset-initial-eda" class="nav-link" data-scroll-target="#dataset-initial-eda">3. Dataset &amp; Initial EDA</a>
-  <ul class="collapse">
-  <li><a href="#import-data" id="toc-import-data" class="nav-link" data-scroll-target="#import-data">3.1 Import data</a></li>
-  <li><a href="#data-wrangling" id="toc-data-wrangling" class="nav-link" data-scroll-target="#data-wrangling">3.2 Data wrangling</a></li>
-  <li><a href="#eda-to-understand-the-dataset" id="toc-eda-to-understand-the-dataset" class="nav-link" data-scroll-target="#eda-to-understand-the-dataset">3.2 EDA to understand the dataset</a></li>
-  </ul></li>
-  <li><a href="#module-design" id="toc-module-design" class="nav-link" data-scroll-target="#module-design">4 Module design</a>
-  <ul class="collapse">
-  <li><a href="#network-visualization-overview-sub-module" id="toc-network-visualization-overview-sub-module" class="nav-link" data-scroll-target="#network-visualization-overview-sub-module">4.1 Network Visualization Overview sub-Module</a></li>
-  <li><a href="#community-detection-sub-module" id="toc-community-detection-sub-module" class="nav-link" data-scroll-target="#community-detection-sub-module">4.2 Community Detection sub-Module</a></li>
-  </ul></li>
-  <li><a href="#storyboard-ui-design" id="toc-storyboard-ui-design" class="nav-link" data-scroll-target="#storyboard-ui-design">5. Storyboard / UI design</a></li>
-  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">6. Next steps</a></li>
-  </ul></li>
+  <li><a href="#use-tableau-to-plot-bullet-graph-and-sparkline" id="toc-use-tableau-to-plot-bullet-graph-and-sparkline" class="nav-link active" data-scroll-target="#use-tableau-to-plot-bullet-graph-and-sparkline">Use Tableau to plot bullet graph and Sparkline</a></li>
   </ul>
 </nav>
     </div>
@@ -562,7 +510,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take-home_Ex03</h1>
+<h1 class="title">In-class_Ex10</h1>
 </div>
 
 
@@ -572,21 +520,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>Cathy Chu </p>
+             <p>Cathy C. </p>
           </div>
   </div>
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">March 30, 2025</p>
-    </div>
-  </div>
   
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">March 30, 2025</p>
+      <p class="date-modified">March 29, 2025</p>
     </div>
   </div>
     
@@ -597,180 +539,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="track-singapore-public-dollars-with-network-dashboards" class="level1">
-<h1>Track Singapore Public Dollars with Network Dashboards</h1>
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
-<p>Brief overview of the application’s purpose and key features Summary of prototyping process and results Key findings and recommendations for full development</p>
-</section>
-<section id="r-package-evaluation" class="level2">
-<h2 class="anchored" data-anchor-id="r-package-evaluation">2. R Package Evaluation</h2>
-<p>Selected Packages and Justification</p>
-<p>Network visualization packages: igraph, visNetwork Data manipulation: dplyr, tidyr Shiny components: shiny, shinydashboard Community detection: igraph algorithms Interactive tables: DT Date handling: lubridate</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(tidyverse, dplyr, lubridate, tidyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-<section id="dataset-initial-eda" class="level2">
-<h2 class="anchored" data-anchor-id="dataset-initial-eda">3. Dataset &amp; Initial EDA</h2>
-<p>The dataset used for this module is <a href="https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view">GeBIZ dataset</a> from <a href="https://data.gov.sg/">Singapore’s open data portal.</a> The data is provided by Ministry of Fiance. It lists all open tenders put out by government agencies since FY2019 (2019 April - 2024 March).</p>
-<p>Another dataset is derived from the first module that focuses on Text Analysis and developed for the Group project. This dataset <em>Labeled_Tenders.csv</em> contains the tender categories for each tender. The government entity category information was together combined into this data. Therefore, after importing the data, one of the next steps would be to join the data to obtain tender categories and agency types for Network Analysis.</p>
-<section id="import-data" class="level3">
-<h3 class="anchored" data-anchor-id="import-data">3.1 Import data</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>GeBiz_csv <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/GovernmentProcurementviaGeBIZ.csv"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>label_data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/Labeled_Tenders.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<section id="glance-at-the-government-dataset" class="level4">
-<h4 class="anchored" data-anchor-id="glance-at-the-government-dataset"><strong>Glance at the government dataset</strong></h4>
-<p>The dataset has 18,638 rows and 7 columns. The 7 columns are <em>tender_no, tender_description, agency, award_date, tender_detail_status, supplier_name, and awarded_amt.</em> Among these variables, awarded_amt is numeric type while the rest are all character type.</p>
-<p>Note that the award_date is also character_type. We will need to transform the type to date type and do further processing to meet Network Visualisation’s needs.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(GeBiz_csv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 18,638
-Columns: 7
-$ tender_no            &lt;chr&gt; "ACR000ETT18300010", "ACR000ETT18300011", "ACR000…
-$ tender_description   &lt;chr&gt; "SUPPLY, DESIGN, DEVELOPMENT, CUSTOMIZATION, DELI…
-$ agency               &lt;chr&gt; "Accounting And Corporate Regulatory Authority", …
-$ award_date           &lt;chr&gt; "11/6/2019", "10/5/2019", "30/4/2019", "29/8/2019…
-$ tender_detail_status &lt;chr&gt; "Awarded to Suppliers", "Awarded to No Suppliers"…
-$ supplier_name        &lt;chr&gt; "AZAAS PTE. LTD.", "Unknown", "ACCENTURE SG SERVI…
-$ awarded_amt          &lt;dbl&gt; 2305880.0, 0.0, 2035000.0, 30700373.9, 178800.0, …</code></pre>
-</div>
-</div>
-</section>
-<section id="glance-at-the-derived-data" class="level4">
-<h4 class="anchored" data-anchor-id="glance-at-the-derived-data"><strong>Glance at the derived data</strong></h4>
-<p>The dataset derived from Text Analysis module has 24,438 rows and 15 columns. We noted that the rows are more than the original dataset, so it means that during machine learning process, some of the data was duplicated. Since what we want is to join the LDA_category (tender type) and CATEGORY / SUBCAT (agency type), the duplicated data does not affect us.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(label_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 24,438
-Columns: 15
-$ tender_no            &lt;chr&gt; "ACR000ETT18300010", "ACR000ETT18300011", "ACR000…
-$ tender_description   &lt;chr&gt; "SUPPLY, DESIGN, DEVELOPMENT, CUSTOMIZATION, DELI…
-$ agency               &lt;chr&gt; "Accounting And Corporate Regulatory Authority", …
-$ award_date           &lt;date&gt; 2019-06-11, 2019-05-10, 2019-04-30, 2019-08-29, …
-$ tender_detail_status &lt;chr&gt; "Awarded to Suppliers", "Awarded to No Suppliers"…
-$ supplier_name        &lt;chr&gt; "AZAAS PTE. LTD.", "Unknown", "ACCENTURE SG SERVI…
-$ awarded_amt          &lt;dbl&gt; 2305880.0, 0.0, 2035000.0, 30700373.9, 178800.0, …
-$ agency_clean         &lt;chr&gt; "accounting and corporate regulatory authority", …
-$ NAME                 &lt;chr&gt; "ACCOUNTING AND CORPORATE REGULATORY AUTHORITY (A…
-$ CATEGORY             &lt;chr&gt; "STATUTORY_BOARDS", "STATUTORY_BOARDS", "STATUTOR…
-$ SUBCAT               &lt;chr&gt; "STATUTORY_BOARDS", "STATUTORY_BOARDS", "STATUTOR…
-$ tender_clean         &lt;chr&gt; "design development customization  installation t…
-$ topic                &lt;dbl&gt; 1, 1, 5, 1, 4, 2, 6, 6, 6, 2, 1, 1, 3, 4, 3, 6, 6…
-$ gamma                &lt;dbl&gt; 0.6590389, 0.7189741, 0.7862579, 0.9379768, 0.399…
-$ LDA_Category         &lt;chr&gt; "General Procurement - Goods", "General Procureme…</code></pre>
-</div>
-</div>
-</section>
-</section>
-<section id="data-wrangling" class="level3">
-<h3 class="anchored" data-anchor-id="data-wrangling">3.2 Data wrangling</h3>
-<p>Before we conduct joint of the dataset, we want to have a quick exploratory data analysis to understand whether the dataset would need further processing before or after joining them. Please see section 3.2 for the preliminary EDA.</p>
-<p>The insights we obtained from the EDA is that there are unknown entries for supplier_name with zero amount in awarded_amt. These are actually tenders that fail to have a successful bid. In this case, we will not include it in the network analysis.</p>
-<p>What we need to do during data wrangling is to convert dates into date type, filter out the entries that have no tender awarded, as well as add columns for Year, Month and Quarter, as we next may plan to use them for data range selection and analysis variables. During EDA, we find no missing values. So there is no need to handle this.</p>
-<p>In the code below, we will achieve these goals mentioned above.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#filter out Unknown value (no tender awarded)</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>GeBiz_full <span class="ot">&lt;-</span> GeBiz_csv <span class="sc">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(supplier_name <span class="sc">!=</span> <span class="st">"Unknown"</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert dates</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>GeBiz_full<span class="sc">$</span>award_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(GeBiz_full<span class="sc">$</span>award_date, , <span class="at">format =</span> <span class="st">"%d/%m/%Y"</span>)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove white space if have.</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>GeBiz_full<span class="sc">$</span>agency <span class="ot">&lt;-</span> <span class="fu">trimws</span>(GeBiz_full<span class="sc">$</span>agency)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>GeBiz_full<span class="sc">$</span>supplier_name <span class="ot">&lt;-</span> <span class="fu">trimws</span>(GeBiz_full<span class="sc">$</span>supplier_name)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Add year and month columns for time-based filtering</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>GeBiz_addtime <span class="ot">&lt;-</span> GeBiz_full <span class="sc">%&gt;%</span></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">award_year =</span> <span class="fu">format</span>(award_date, <span class="st">"%Y"</span>),</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">month =</span> <span class="fu">format</span>(award_date, <span class="st">"%m"</span>),</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">year_month =</span> <span class="fu">format</span>(award_date, <span class="st">"%Y-%m"</span>),</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">quarter =</span> <span class="fu">quarters</span>(award_date))</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#write_csv(GeBiz_addtime, "GeBiz_add_y_m.csv")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div class="goals">
-<div class="goals-header">
-<p>Note</p>
-</div>
-<div class="goals-container">
-<p>In the code above, we actually managed to save the data as a csv file <em>eBiz_add_y_m.csv.</em> This is so when we need further processing during app development, the process is quicker and less computation heavy.</p>
-</div>
-</div>
-</section>
-<section id="eda-to-understand-the-dataset" class="level3">
-<h3 class="anchored" data-anchor-id="eda-to-understand-the-dataset">3.2 EDA to understand the dataset</h3>
-<p>Data import and cleaning procedures Network structure transformation methods - Consider showing concrete code examples of how you transform the raw procurement data into network format. Testing results with sample procurement data</p>
-</section>
-</section>
-<section id="module-design" class="level2">
-<h2 class="anchored" data-anchor-id="module-design">4 Module design</h2>
-<section id="network-visualization-overview-sub-module" class="level3">
-<h3 class="anchored" data-anchor-id="network-visualization-overview-sub-module">4.1 Network Visualization Overview sub-Module</h3>
-<p><em>What I discovered about the network structure</em></p>
-<section id="data-preparation" class="level4">
-<h4 class="anchored" data-anchor-id="data-preparation">4.1.1 Data preparation</h4>
-</section>
-<section id="network-visualization-module-architecture" class="level4">
-<h4 class="anchored" data-anchor-id="network-visualization-module-architecture">4.1.2 Network Visualization Module Architecture</h4>
-<p><em>Node-Edge Structure Creation</em> Agencies and suppliers are represented as nodes Procurement contracts form edges between them Node types are visually distinguished (agencies as diamonds, suppliers as circles)</p>
-<p><em>Visual Design</em> Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs)</p>
-<p>Explain the reasoning behind specific visualization choices (colors, shapes, sizes).</p>
-<p>Below is the outputs (code and show) 1. Main network visualization (test &amp; show case the following) - Interactive Elements (Selection, Hover, Zoom) - Edge thickness prototype - Network layout algorithms prototype - Size nodes by degree centrality - Performance mode</p>
-<ol start="2" type="1">
-<li>Network details (Metrics table)</li>
-</ol>
-<ul>
-<li>Show case the table - Agency, suppliers, top contracts</li>
-</ul>
-<ol start="3" type="1">
-<li>Ego Network Extraction and Visualization</li>
-</ol>
-<ul>
-<li>Focal Node Highlighting (showcase the shape)</li>
-<li>Connected Nodes Identification ()</li>
-<li>Edge Filtering Logic</li>
-</ul>
-<ol start="4" type="1">
-<li>Ego network Data Tables and Metrics Components</li>
-</ol>
-<p><em>Parameter Control Design</em> Filtering Controls Implementation - Date Range Selection - Entity Selection (Agencies, Suppliers) - Category and Amount Filters</p>
-<p>Visualization Controls Implementation - Layout Selection - Node Sizing Options - Edge Weight Representation - Performance Optimization Controls</p>
-<p>(Maybe) #### 4.1.3 Exploratory Analysis Findings</p>
-<p>Network Structure Insights Agency-Supplier Relationship Patterns Temporal Patterns in Procurement Networks Key Metrics and Their Distribution Layout Comparison Effects on Network Interpretation</p>
-</section>
-</section>
-<section id="community-detection-sub-module" class="level3">
-<h3 class="anchored" data-anchor-id="community-detection-sub-module">4.2 Community Detection sub-Module</h3>
-<p><em>Visual Design</em> Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs) Explain the reasoning behind specific visualization choices (colors, shapes, sizes).</p>
-<p>Below is the outputs (code and show) 1. Community network (comparing &amp; different parameter)</p>
-<ol start="2" type="1">
-<li><p>Community metrics</p></li>
-<li><p>Community ego network (comparing &amp; different parameter)</p></li>
-<li><p>Ego metrics</p></li>
-</ol>
-<p>R Code Preparation and Testing: Algorithm implementation and comparison Community visualization approaches Performance testing with varying network sizes</p>
-<p>Parameters and Outputs Specification: Filtering parameters (date range, agency type/name, supplier, tender type) Visualization control parameters (layout, node size, edge weight) Analysis parameters (metrics, thresholds, community detection method)</p>
-<p>Application Outputs: Network visualizations (main network, ego network, community view) Data tables and metrics (network summary, node metrics, community statistics) Interactive elements (node selection, tooltips, export options)</p>
-<p>Parameter-Output Relationships: How each parameter affects the visualizations and analysis Reactive dependency structure</p>
-</section>
-</section>
-<section id="storyboard-ui-design" class="level2">
-<h2 class="anchored" data-anchor-id="storyboard-ui-design">5. Storyboard / UI design</h2>
-</section>
-<section id="next-steps" class="level2">
-<h2 class="anchored" data-anchor-id="next-steps">6. Next steps</h2>
-<p>Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) [Dataset]. data.gov.sg. Retrieved March 30, 2025 from <a href="https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view" class="uri">https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view</a></p>
+<section id="use-tableau-to-plot-bullet-graph-and-sparkline" class="level2">
+<h2 class="anchored" data-anchor-id="use-tableau-to-plot-bullet-graph-and-sparkline">Use Tableau to plot bullet graph and Sparkline</h2>
+<p>Sparksline 1. Drag date to Columns (change to Month Year) 2. Drag Sales, Product type, Products to Rows 3. A line graph will show up 4. Add a filter by year</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

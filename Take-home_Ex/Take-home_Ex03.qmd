@@ -10,147 +10,163 @@ execute:
   freeze: true  
 ---
 
-Check take-home 3 notes to include the key points
+# Track Singapore Public Dollars with Network Dashboards
 
 ## 1. Overview
 
-Brief overview of the application's purpose and key features
-Summary of prototyping process and results
-Key findings and recommendations for full development
+Brief overview of the application's purpose and key features Summary of prototyping process and results Key findings and recommendations for full development
 
 ## 2. R Package Evaluation
 
 Selected Packages and Justification
 
-Network visualization packages: igraph, visNetwork
-Data manipulation: dplyr, tidyr
-Shiny components: shiny, shinydashboard
-Community detection: igraph algorithms
-Interactive tables: DT
-Date handling: lubridate
+Network visualization packages: igraph, visNetwork Data manipulation: dplyr, tidyr Shiny components: shiny, shinydashboard Community detection: igraph algorithms Interactive tables: DT Date handling: lubridate
 
+```{r}
+pacman::p_load(tidyverse, dplyr, lubridate, tidyr)
+```
 
 ## 3. Dataset & Initial EDA
 
-Data import and cleaning procedures
-Network structure transformation methods
-- Consider showing concrete code examples of how you transform the raw procurement data into network format.
-Testing results with sample procurement data
+The dataset used for this module is [GeBIZ dataset](https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view) from [Singapore's open data portal.](https://data.gov.sg/) The data is provided by Ministry of Fiance. It lists all open tenders put out by government agencies since FY2019 (2019 April - 2024 March).
+
+Another dataset is derived from the first module that focuses on Text Analysis and developed for the Group project. This dataset *Labeled_Tenders.csv* contains the tender categories for each tender. The government entity category information was together combined into this data. Therefore, after importing the data, one of the next steps would be to join the data to obtain tender categories and agency types for Network Analysis.
+
+### 3.1 Import data
+
+```{r}
+GeBiz_csv <- read_csv("data/GovernmentProcurementviaGeBIZ.csv")
+label_data <- read_csv("data/Labeled_Tenders.csv")
+
+```
+
+#### **Glance at the government dataset**
+
+The dataset has 18,638 rows and 7 columns. The 7 columns are *tender_no, tender_description, agency, award_date, tender_detail_status, supplier_name, and awarded_amt.* Among these variables, awarded_amt is numeric type while the rest are all character type.
+
+Note that the award_date is also character_type. We will need to transform the type to date type and do further processing to meet Network Visualisation's needs.
+
+```{r}
+glimpse(GeBiz_csv)
+```
+
+#### **Glance at the derived data**
+
+The dataset derived from Text Analysis module has 24,438 rows and 15 columns. We noted that the rows are more than the original dataset, so it means that during machine learning process, some of the data was duplicated. Since what we want is to join the LDA_category (tender type) and CATEGORY / SUBCAT (agency type), the duplicated data does not affect us.
+
+```{r}
+glimpse(label_data)
+```
+
+### 3.2 Data wrangling
+
+Before we conduct joint of the dataset, we want to have a quick exploratory data analysis to understand whether the dataset would need further processing before or after joining them. Please see section 3.2 for the preliminary EDA.
+
+The insights we obtained from the EDA is that there are unknown entries for supplier_name with zero amount in awarded_amt. These are actually tenders that fail to have a successful bid. In this case, we will not include it in the network analysis.
+
+What we need to do during data wrangling is to convert dates into date type, filter out the entries that have no tender awarded, as well as add columns for Year, Month and Quarter, as we next may plan to use them for data range selection and analysis variables. During EDA, we find no missing values. So there is no need to handle this.
+
+In the code below, we will achieve these goals mentioned above.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+#filter out Unknown value (no tender awarded)
+GeBiz_full <- GeBiz_csv %>%
+  filter(supplier_name != "Unknown")
+
+# Convert dates
+GeBiz_full$award_date <- as.Date(GeBiz_full$award_date, , format = "%d/%m/%Y")
+
+# Remove white space if have.
+GeBiz_full$agency <- trimws(GeBiz_full$agency)
+GeBiz_full$supplier_name <- trimws(GeBiz_full$supplier_name)
+
+# Add year and month columns for time-based filtering
+GeBiz_addtime <- GeBiz_full %>%
+  mutate(award_year = format(award_date, "%Y"),
+         month = format(award_date, "%m"),
+         year_month = format(award_date, "%Y-%m"),
+         quarter = quarters(award_date))
+#write_csv(GeBiz_addtime, "GeBiz_add_y_m.csv")
+```
+
+::::: goals
+::: goals-header
+Note
+:::
+
+::: goals-container
+In the code above, we actually managed to save the data as a csv file *eBiz_add_y_m.csv.* This is so when we need further processing during app development, the process is quicker and less computation heavy.
+:::
+:::::
 
 
-# 4 Module design
 
-## 4.1 Network Visualization Overview sub-Module
+### 3.2 EDA to understand the dataset
+
+Data import and cleaning procedures Network structure transformation methods - Consider showing concrete code examples of how you transform the raw procurement data into network format. Testing results with sample procurement data
+
+## 4 Module design
+
+### 4.1 Network Visualization Overview sub-Module
+
 *What I discovered about the network structure*
 
-### 4.1.1 Data preparation
+#### 4.1.1 Data preparation
 
-### 4.1.2 Network Visualization Module Architecture
-*Node-Edge Structure Creation*
-Agencies and suppliers are represented as nodes
-Procurement contracts form edges between them
-Node types are visually distinguished (agencies as diamonds, suppliers as circles)
+#### 4.1.2 Network Visualization Module Architecture
 
-*Visual Design* 
-Functionality and interactivity
-Shiny UI component selection (parameters)
-- Filter components (dateRangeInput, selectInput, etc.)
-- Control components (buttons, sliders, checkboxes)
-- Advanced input handling (typeahead search, conditional inputs)
+*Node-Edge Structure Creation* Agencies and suppliers are represented as nodes Procurement contracts form edges between them Node types are visually distinguished (agencies as diamonds, suppliers as circles)
 
+*Visual Design* Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs)
 
 Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
 
-Below is the outputs (code and show)
-1. Main network visualization
-(test & show case the following)
-- Interactive Elements (Selection, Hover, Zoom)
-- Edge thickness prototype
-- Network layout algorithms prototype
-- Size nodes by degree centrality
-- Performance mode
+Below is the outputs (code and show) 1. Main network visualization (test & show case the following) - Interactive Elements (Selection, Hover, Zoom) - Edge thickness prototype - Network layout algorithms prototype - Size nodes by degree centrality - Performance mode
 
-2. Network details (Metrics table)
-- Show case the table - Agency, suppliers, top contracts 
+2.  Network details (Metrics table)
 
-3. Ego Network Extraction and Visualization
-- Focal Node Highlighting (showcase the shape)
-- Connected Nodes Identification ()
-- Edge Filtering Logic
+-   Show case the table - Agency, suppliers, top contracts
 
-4. Ego network Data Tables and Metrics Components
+3.  Ego Network Extraction and Visualization
 
+-   Focal Node Highlighting (showcase the shape)
+-   Connected Nodes Identification ()
+-   Edge Filtering Logic
 
-*Parameter Control Design*
-Filtering Controls Implementation
-- Date Range Selection
-- Entity Selection (Agencies, Suppliers)
-- Category and Amount Filters
+4.  Ego network Data Tables and Metrics Components
 
-Visualization Controls Implementation
-- Layout Selection
-- Node Sizing Options
-- Edge Weight Representation
-- Performance Optimization Controls
+*Parameter Control Design* Filtering Controls Implementation - Date Range Selection - Entity Selection (Agencies, Suppliers) - Category and Amount Filters
 
-(Maybe)
-### 4.1.3 Exploratory Analysis Findings
+Visualization Controls Implementation - Layout Selection - Node Sizing Options - Edge Weight Representation - Performance Optimization Controls
 
-Network Structure Insights
-Agency-Supplier Relationship Patterns
-Temporal Patterns in Procurement Networks
-Key Metrics and Their Distribution
-Layout Comparison Effects on Network Interpretation
+(Maybe) \#### 4.1.3 Exploratory Analysis Findings
 
-
+Network Structure Insights Agency-Supplier Relationship Patterns Temporal Patterns in Procurement Networks Key Metrics and Their Distribution Layout Comparison Effects on Network Interpretation
 
 ### 4.2 Community Detection sub-Module
 
-*Visual Design* 
-Functionality and interactivity
-Shiny UI component selection (parameters)
-- Filter components (dateRangeInput, selectInput, etc.)
-- Control components (buttons, sliders, checkboxes)
-- Advanced input handling (typeahead search, conditional inputs)
-Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
+*Visual Design* Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs) Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
 
-Below is the outputs (code and show)
-1. Community network (comparing & different parameter)
+Below is the outputs (code and show) 1. Community network (comparing & different parameter)
 
-2. Community metrics
+2.  Community metrics
 
-3. Community ego network (comparing & different parameter)
+3.  Community ego network (comparing & different parameter)
 
-4. Ego metrics
+4.  Ego metrics
 
+R Code Preparation and Testing: Algorithm implementation and comparison Community visualization approaches Performance testing with varying network sizes
 
+Parameters and Outputs Specification: Filtering parameters (date range, agency type/name, supplier, tender type) Visualization control parameters (layout, node size, edge weight) Analysis parameters (metrics, thresholds, community detection method)
 
-R Code Preparation and Testing:
-Algorithm implementation and comparison
-Community visualization approaches
-Performance testing with varying network sizes
+Application Outputs: Network visualizations (main network, ego network, community view) Data tables and metrics (network summary, node metrics, community statistics) Interactive elements (node selection, tooltips, export options)
 
-Parameters and Outputs Specification:
-Filtering parameters (date range, agency type/name, supplier, tender type)
-Visualization control parameters (layout, node size, edge weight)
-Analysis parameters (metrics, thresholds, community detection method)
+Parameter-Output Relationships: How each parameter affects the visualizations and analysis Reactive dependency structure
 
-Application Outputs:
-Network visualizations (main network, ego network, community view)
-Data tables and metrics (network summary, node metrics, community statistics)
-Interactive elements (node selection, tooltips, export options)
+## 5. Storyboard / UI design
 
-Parameter-Output Relationships:
-How each parameter affects the visualizations and analysis
-Reactive dependency structure
+## 6. Next steps
 
-
-
-
-
-## 6. Storyboard / UI design
-
-
-## 7. Next steps
-
-
+Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) \[Dataset\]. data.gov.sg. Retrieved March 30, 2025 from <https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view>
