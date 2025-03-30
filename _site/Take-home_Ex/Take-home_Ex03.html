@@ -669,6 +669,8 @@ $ LDA_Category         &lt;chr&gt; "General Procurement - Goods", "General Procu
 </section>
 <section id="data-wrangling" class="level3">
 <h3 class="anchored" data-anchor-id="data-wrangling">3.2 Data wrangling</h3>
+<section id="data-cleaning" class="level4">
+<h4 class="anchored" data-anchor-id="data-cleaning"><strong>3.2.1 Data cleaning</strong></h4>
 <p>Before we conduct joint of the dataset, we want to have a quick exploratory data analysis to understand whether the dataset would need further processing before or after joining them. Please see section 3.2 for the preliminary EDA.</p>
 <p>The insights we obtained from the EDA is that there are unknown entries for supplier_name with zero amount in awarded_amt. These are actually tenders that fail to have a successful bid. In this case, we will not include it in the network analysis.</p>
 <p>What we need to do during data wrangling is to convert dates into date type, filter out the entries that have no tender awarded, as well as add columns for Year, Month and Quarter, as we next may plan to use them for data range selection and analysis variables. During EDA, we find no missing values. So there is no need to handle this.</p>
@@ -693,17 +695,213 @@ $ LDA_Category         &lt;chr&gt; "General Procurement - Goods", "General Procu
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">month =</span> <span class="fu">format</span>(award_date, <span class="st">"%m"</span>),</span>
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">year_month =</span> <span class="fu">format</span>(award_date, <span class="st">"%Y-%m"</span>),</span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">quarter =</span> <span class="fu">quarters</span>(award_date))</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#write_csv(GeBiz_addtime, "GeBiz_add_y_m.csv")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#write_csv(GeBiz_addtime, "GeBiz_add_y_m.csv")</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(GeBiz_addtime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 17,855
+Columns: 11
+$ tender_no            &lt;chr&gt; "ACR000ETT18300010", "ACR000ETT19300001", "ACR000…
+$ tender_description   &lt;chr&gt; "SUPPLY, DESIGN, DEVELOPMENT, CUSTOMIZATION, DELI…
+$ agency               &lt;chr&gt; "Accounting And Corporate Regulatory Authority", …
+$ award_date           &lt;date&gt; 2019-06-11, 2019-04-30, 2019-08-29, 2019-08-06, …
+$ tender_detail_status &lt;chr&gt; "Awarded to Suppliers", "Awarded to Suppliers", "…
+$ supplier_name        &lt;chr&gt; "AZAAS PTE. LTD.", "ACCENTURE SG SERVICES PTE. LT…
+$ awarded_amt          &lt;dbl&gt; 2305880.00, 2035000.00, 30700373.87, 178800.00, 8…
+$ award_year           &lt;chr&gt; "2019", "2019", "2019", "2019", "2019", "2020", "…
+$ month                &lt;chr&gt; "06", "04", "08", "08", "11", "11", "11", "12", "…
+$ year_month           &lt;chr&gt; "2019-06", "2019-04", "2019-08", "2019-08", "2019…
+$ quarter              &lt;chr&gt; "Q2", "Q2", "Q3", "Q3", "Q4", "Q4", "Q4", "Q4", "…</code></pre>
+</div>
 </div>
 <div class="goals">
 <div class="goals-header">
 <p>Note</p>
 </div>
 <div class="goals-container">
-<p>In the code above, we actually managed to save the data as a csv file <em>eBiz_add_y_m.csv.</em> This is so when we need further processing during app development, the process is quicker and less computation heavy.</p>
+<ul>
+<li>The data now has 17,855 rows and 11 columns. Less rows from the original dataset because the unknown entries have been removed.</li>
+<li>Now <em>award_date</em> has been converted to <em>date</em> type, and the year, month, and quarter have been added to the dataset.</li>
+<li>In the code above, we managed to save the data as a csv file <em>eBiz_add_y_m.csv.</em> This is so when we need further processing during app development, the process is quicker and less computation heavy.</li>
+</ul>
 </div>
 </div>
+</section>
+<section id="join-data" class="level4">
+<h4 class="anchored" data-anchor-id="join-data"><strong>3.2.2 Join data</strong></h4>
+<p>In the earlier section, we have imported two datasets, one of which has the derived columns such as tender category from machine learning and agency type from the government definition. In this step, we will join these columns to be used in the Network Analysis.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Match LDA &amp; agency type</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>network_w_type_data <span class="ot">&lt;-</span> GeBiz_addtime <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">row_id =</span> <span class="fu">row_number</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tender_cat =</span> label_data<span class="sc">$</span>LDA_Category[<span class="fu">match</span>(tender_description,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                                                    label_data<span class="sc">$</span>tender_description)]) <span class="sc">%&gt;%</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">agency_type =</span> label_data<span class="sc">$</span>SUBCAT[<span class="fu">match</span>(agency,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                                               label_data<span class="sc">$</span>agency)]) <span class="sc">%&gt;%</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>row_id)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(network_w_type_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 17,855
+Columns: 13
+$ tender_no            &lt;chr&gt; "ACR000ETT18300010", "ACR000ETT19300001", "ACR000…
+$ tender_description   &lt;chr&gt; "SUPPLY, DESIGN, DEVELOPMENT, CUSTOMIZATION, DELI…
+$ agency               &lt;chr&gt; "Accounting And Corporate Regulatory Authority", …
+$ award_date           &lt;date&gt; 2019-06-11, 2019-04-30, 2019-08-29, 2019-08-06, …
+$ tender_detail_status &lt;chr&gt; "Awarded to Suppliers", "Awarded to Suppliers", "…
+$ supplier_name        &lt;chr&gt; "AZAAS PTE. LTD.", "ACCENTURE SG SERVICES PTE. LT…
+$ awarded_amt          &lt;dbl&gt; 2305880.00, 2035000.00, 30700373.87, 178800.00, 8…
+$ award_year           &lt;chr&gt; "2019", "2019", "2019", "2019", "2019", "2020", "…
+$ month                &lt;chr&gt; "06", "04", "08", "08", "11", "11", "11", "12", "…
+$ year_month           &lt;chr&gt; "2019-06", "2019-04", "2019-08", "2019-08", "2019…
+$ quarter              &lt;chr&gt; "Q2", "Q2", "Q3", "Q3", "Q4", "Q4", "Q4", "Q4", "…
+$ tender_cat           &lt;chr&gt; "General Procurement - Goods", "Engineering Procu…
+$ agency_type          &lt;chr&gt; "STATUTORY_BOARDS", "STATUTORY_BOARDS", "STATUTOR…</code></pre>
+</div>
+</div>
+</section>
+<section id="create-rds-file" class="level4">
+<h4 class="anchored" data-anchor-id="create-rds-file">3.2.3 Create RDS file</h4>
+<p>Now, we will create a RDS file for Network module use. Within the code below, the related time fields are converted to date or numeric types for use. The agencies, suppliers are assigned a unique ID and type. Edges are created which defines the relationships between agencies and suppliers, and aggregate multiple tenders into single connections.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert character dates to appropriate types</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>GeBiz_processed <span class="ot">&lt;-</span> network_w_type_data <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># award_date is already a date type, but confirm it</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">award_date =</span> <span class="fu">as.Date</span>(award_date),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">award_year =</span> <span class="fu">as.numeric</span>(award_year),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">month_num =</span> <span class="fu">as.numeric</span>(month),</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">year_month =</span> <span class="fu">paste0</span>(award_year, <span class="st">"-"</span>, <span class="fu">sprintf</span>(<span class="st">"%02d"</span>, month_num)),</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">year_month_date =</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(year_month, <span class="st">"-01"</span>)),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">month_index =</span> award_year <span class="sc">*</span> <span class="dv">12</span> <span class="sc">+</span> month_num,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">month_name =</span> month.name[month_num]</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create Node Dataset </span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>nodes_df <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Agencies</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(<span class="at">name =</span> agency) <span class="sc">%&gt;%</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">type =</span> <span class="st">"agency"</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">id =</span> <span class="fu">paste0</span>(<span class="st">"agency_"</span>, <span class="fu">row_number</span>())</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Suppliers</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(<span class="at">name =</span> supplier_name) <span class="sc">%&gt;%</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">type =</span> <span class="st">"supplier"</span>,</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">id =</span> <span class="fu">paste0</span>(<span class="st">"supplier_"</span>, <span class="fu">row_number</span>())</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add aggregated metrics</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(<span class="at">name =</span> agency) <span class="sc">%&gt;%</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">summarise</span>(</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_contracts =</span> <span class="fu">n</span>(),</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_award_amount =</span> <span class="fu">sum</span>(awarded_amt),</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>        <span class="at">first_contract_date =</span> <span class="fu">min</span>(award_date),</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>        <span class="at">last_contract_date =</span> <span class="fu">max</span>(award_date)</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"name"</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>    GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(<span class="at">name =</span> supplier_name) <span class="sc">%&gt;%</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>      <span class="fu">summarise</span>(</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_contracts =</span> <span class="fu">n</span>(),</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_award_amount =</span> <span class="fu">sum</span>(awarded_amt),</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>        <span class="at">first_contract_date =</span> <span class="fu">min</span>(award_date),</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>        <span class="at">last_contract_date =</span> <span class="fu">max</span>(award_date)</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"name"</span>, </span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">suffix =</span> <span class="fu">c</span>(<span class="st">"_agency"</span>, <span class="st">"_supplier"</span>)</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Combine metrics</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_contracts =</span> <span class="fu">coalesce</span>(total_contracts_agency, total_contracts_supplier),</span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_award_amount =</span> <span class="fu">coalesce</span>(total_award_amount_agency, total_award_amount_supplier),</span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_contract_date =</span> <span class="fu">coalesce</span>(first_contract_date_agency, first_contract_date_supplier),</span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_contract_date =</span> <span class="fu">coalesce</span>(last_contract_date_agency, last_contract_date_supplier)</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">ends_with</span>(<span class="fu">c</span>(<span class="st">"_agency"</span>, <span class="st">"_supplier"</span>)))</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Update Edge Dataset to use new IDs</span></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>edges_df <span class="ot">&lt;-</span> GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Aggregate edges</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(agency, supplier_name) <span class="sc">%&gt;%</span></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_contracts =</span> <span class="fu">n</span>(),</span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_award_amount =</span> <span class="fu">sum</span>(awarded_amt),</span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_contract_date =</span> <span class="fu">min</span>(award_date),</span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_contract_date =</span> <span class="fu">max</span>(award_date),</span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>    <span class="at">tender_cat =</span> <span class="fu">paste</span>(<span class="fu">unique</span>(tender_cat), <span class="at">collapse =</span> <span class="st">", "</span>)</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Join with node IDs</span></span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>    nodes_df <span class="sc">%&gt;%</span> </span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"agency"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(<span class="at">from_id =</span> id, <span class="at">from_name =</span> name),</span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"agency"</span> <span class="ot">=</span> <span class="st">"from_name"</span>)</span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>    nodes_df <span class="sc">%&gt;%</span> </span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"supplier"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(<span class="at">to_id =</span> id, <span class="at">to_name =</span> name),</span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"supplier_name"</span> <span class="ot">=</span> <span class="st">"to_name"</span>)</span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a><span class="co"># Add monthly edges breakdown</span></span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a>monthly_edges_df <span class="ot">&lt;-</span> GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(agency, supplier_name, year_month, award_year, month_num, month_name) <span class="sc">%&gt;%</span></span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_contracts =</span> <span class="fu">n</span>(),</span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_award_amount =</span> <span class="fu">sum</span>(awarded_amt),</span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a>    <span class="at">month_index =</span> <span class="fu">first</span>(month_index),</span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a months reference table for filtering</span></span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a>months_table <span class="ot">&lt;-</span> GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(year_month, award_year, month_num, month_name, month_index) <span class="sc">%&gt;%</span></span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(month_index) <span class="sc">%&gt;%</span></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create a nice display label</span></span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a>    <span class="at">display_label =</span> <span class="fu">paste0</span>(month_name, <span class="st">" "</span>, award_year)</span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a><span class="co"># Create agency_types data frame - explicit mapping between agencies and their types</span></span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>agency_types <span class="ot">&lt;-</span> GeBiz_processed <span class="sc">%&gt;%</span></span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(agency, agency_type) <span class="sc">%&gt;%</span></span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(agency_type))</span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the complete network data</span></span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a>network_data <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a>  <span class="at">nodes =</span> nodes_df,</span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a>  <span class="at">edges =</span> edges_df,</span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a>  <span class="at">monthly_edges =</span> monthly_edges_df,</span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>  <span class="at">months =</span> months_table,</span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>  <span class="at">agency_types =</span> agency_types,</span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a>  <span class="at">time_info =</span> <span class="fu">list</span>(</span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>    <span class="at">years =</span> <span class="fu">unique</span>(GeBiz_processed<span class="sc">$</span>award_year),</span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a>    <span class="at">months =</span> <span class="fu">unique</span>(GeBiz_processed<span class="sc">$</span>year_month),</span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_date =</span> <span class="fu">min</span>(GeBiz_processed<span class="sc">$</span>award_date),</span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_date =</span> <span class="fu">max</span>(GeBiz_processed<span class="sc">$</span>award_date),</span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>    <span class="at">month_range =</span> <span class="fu">range</span>(GeBiz_processed<span class="sc">$</span>month_index)  </span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
 </section>
 <section id="eda-to-understand-the-dataset" class="level3">
 <h3 class="anchored" data-anchor-id="eda-to-understand-the-dataset">3.2 EDA to understand the dataset</h3>

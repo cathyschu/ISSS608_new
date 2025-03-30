@@ -60,6 +60,8 @@ glimpse(label_data)
 
 ### 3.2 Data wrangling
 
+#### **3.2.1 Data cleaning**
+
 Before we conduct joint of the dataset, we want to have a quick exploratory data analysis to understand whether the dataset would need further processing before or after joining them. Please see section 3.2 for the preliminary EDA.
 
 The insights we obtained from the EDA is that there are unknown entries for supplier_name with zero amount in awarded_amt. These are actually tenders that fail to have a successful bid. In this case, we will not include it in the network analysis.
@@ -89,6 +91,7 @@ GeBiz_addtime <- GeBiz_full %>%
          year_month = format(award_date, "%Y-%m"),
          quarter = quarters(award_date))
 #write_csv(GeBiz_addtime, "GeBiz_add_y_m.csv")
+glimpse(GeBiz_addtime)
 ```
 
 ::::: goals
@@ -97,11 +100,170 @@ Note
 :::
 
 ::: goals-container
-In the code above, we actually managed to save the data as a csv file *eBiz_add_y_m.csv.* This is so when we need further processing during app development, the process is quicker and less computation heavy.
+-   The data now has 17,855 rows and 11 columns. Less rows from the original dataset because the unknown entries have been removed.
+-   Now *award_date* has been converted to *date* type, and the year, month, and quarter have been added to the dataset.
+-   In the code above, we managed to save the data as a csv file *eBiz_add_y_m.csv.* This is so when we need further processing during app development, the process is quicker and less computation heavy.
 :::
 :::::
 
+#### **3.2.2 Join data**
 
+In the earlier section, we have imported two datasets, one of which has the derived columns such as tender category from machine learning and agency type from the government definition. In this step, we will join these columns to be used in the Network Analysis.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+# Match LDA & agency type
+network_w_type_data <- GeBiz_addtime %>%
+
+  mutate(row_id = row_number()) %>%
+  mutate(tender_cat = label_data$LDA_Category[match(tender_description,
+                                                    label_data$tender_description)]) %>%
+  mutate(agency_type = label_data$SUBCAT[match(agency,
+                                               label_data$agency)]) %>%
+  select(-row_id)
+
+glimpse(network_w_type_data)
+```
+
+#### 3.2.3 Create RDS file
+
+Now, we will create a RDS file for Network module use. Within the code below, the related time fields are converted to date or numeric types for use. The agencies, suppliers are assigned a unique ID and type. Edges are created which defines the relationships between agencies and suppliers, and aggregate multiple tenders into single connections.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+# Convert character dates to appropriate types
+GeBiz_processed <- network_w_type_data %>%
+  mutate(
+    # award_date is already a date type, but confirm it
+    award_date = as.Date(award_date),
+    award_year = as.numeric(award_year),
+    month_num = as.numeric(month),
+    year_month = paste0(award_year, "-", sprintf("%02d", month_num)),
+    year_month_date = as.Date(paste0(year_month, "-01")),
+    month_index = award_year * 12 + month_num,
+    month_name = month.name[month_num]
+  )
+
+# Create Node Dataset 
+nodes_df <- bind_rows(
+  # Agencies
+  GeBiz_processed %>%
+    distinct(name = agency) %>%
+    mutate(
+      type = "agency",
+      id = paste0("agency_", row_number())
+    ),
+  
+  # Suppliers
+  GeBiz_processed %>%
+    distinct(name = supplier_name) %>%
+    mutate(
+      type = "supplier",
+      id = paste0("supplier_", row_number())
+    )
+) %>%
+  # Add aggregated metrics
+  left_join(
+    GeBiz_processed %>%
+      group_by(name = agency) %>%
+      summarise(
+        total_contracts = n(),
+        total_award_amount = sum(awarded_amt),
+        first_contract_date = min(award_date),
+        last_contract_date = max(award_date)
+      ),
+    by = "name"
+  ) %>%
+  left_join(
+    GeBiz_processed %>%
+      group_by(name = supplier_name) %>%
+      summarise(
+        total_contracts = n(),
+        total_award_amount = sum(awarded_amt),
+        first_contract_date = min(award_date),
+        last_contract_date = max(award_date)
+      ),
+    by = "name", 
+    suffix = c("_agency", "_supplier")
+  ) %>%
+  # Combine metrics
+  mutate(
+    total_contracts = coalesce(total_contracts_agency, total_contracts_supplier),
+    total_award_amount = coalesce(total_award_amount_agency, total_award_amount_supplier),
+    first_contract_date = coalesce(first_contract_date_agency, first_contract_date_supplier),
+    last_contract_date = coalesce(last_contract_date_agency, last_contract_date_supplier)
+  ) %>%
+  select(-ends_with(c("_agency", "_supplier")))
+
+# Update Edge Dataset to use new IDs
+edges_df <- GeBiz_processed %>%
+  # Aggregate edges
+  group_by(agency, supplier_name) %>%
+  summarise(
+    total_contracts = n(),
+    total_award_amount = sum(awarded_amt),
+    first_contract_date = min(award_date),
+    last_contract_date = max(award_date),
+    tender_cat = paste(unique(tender_cat), collapse = ", ")
+  ) %>%
+  # Join with node IDs
+  left_join(
+    nodes_df %>% 
+      filter(type == "agency") %>% 
+      select(from_id = id, from_name = name),
+    by = c("agency" = "from_name")
+  ) %>%
+  left_join(
+    nodes_df %>% 
+      filter(type == "supplier") %>% 
+      select(to_id = id, to_name = name),
+    by = c("supplier_name" = "to_name")
+  ) %>%
+  ungroup()
+
+
+# Add monthly edges breakdown
+monthly_edges_df <- GeBiz_processed %>%
+  group_by(agency, supplier_name, year_month, award_year, month_num, month_name) %>%
+  summarise(
+    total_contracts = n(),
+    total_award_amount = sum(awarded_amt),
+    month_index = first(month_index),
+    .groups = "drop"
+  )
+
+# Create a months reference table for filtering
+months_table <- GeBiz_processed %>%
+  distinct(year_month, award_year, month_num, month_name, month_index) %>%
+  arrange(month_index) %>%
+  mutate(
+    # Create a nice display label
+    display_label = paste0(month_name, " ", award_year)
+  )
+
+# Create agency_types data frame - explicit mapping between agencies and their types
+agency_types <- GeBiz_processed %>%
+  distinct(agency, agency_type) %>%
+  filter(!is.na(agency_type))
+
+# Save the complete network data
+network_data <- list(
+  nodes = nodes_df,
+  edges = edges_df,
+  monthly_edges = monthly_edges_df,
+  months = months_table,
+  agency_types = agency_types,
+  time_info = list(
+    years = unique(GeBiz_processed$award_year),
+    months = unique(GeBiz_processed$year_month),
+    min_date = min(GeBiz_processed$award_date),
+    max_date = max(GeBiz_processed$award_date),
+    month_range = range(GeBiz_processed$month_index)  
+))
+
+```
 
 ### 3.2 EDA to understand the dataset
 
