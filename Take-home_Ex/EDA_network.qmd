@@ -50,7 +50,7 @@ print(paste("# supplier: ", supplier_count))
 
 ```
 
-### 3.3 Awards amount 
+### 3.3 Awards amount
 
 #### 3.3.1 Award amount in descending order (supplier)
 
@@ -217,8 +217,8 @@ print(paste("Count of unknown suppliers:", unknown_count))
 
 ```
 
-
 ## 5 Top 10 agencies and their top 10 suppliers (by year)
+
 ```{r}
 #| code-fold: true
 #| code-summary: "Show the code"
@@ -291,6 +291,5 @@ To do
 2.  extract year
 3.  extract month
 4.  remove unknown suppliers entry
-
 :::
 :::::

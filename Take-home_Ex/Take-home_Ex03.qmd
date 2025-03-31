@@ -126,7 +126,7 @@ network_w_type_data <- GeBiz_addtime %>%
 glimpse(network_w_type_data)
 ```
 
-#### 3.2.3 Create RDS file
+#### **3.2.3 Create RDS file**
 
 Now, we will create a RDS file for Network module use. Within the code below, the related time fields are converted to date or numeric types for use. The agencies, suppliers are assigned a unique ID and type. Edges are created which defines the relationships between agencies and suppliers, and aggregate multiple tenders into single connections.
 
@@ -267,25 +267,2162 @@ network_data <- list(
 
 ### 3.2 EDA to understand the dataset
 
-Data import and cleaning procedures Network structure transformation methods - Consider showing concrete code examples of how you transform the raw procurement data into network format. Testing results with sample procurement data
+The EDA is parked in a different page for reference. The purpose is to understand the general information of this dataset to process data cleaning and structuring.
 
 ## 4 Module design
 
-### 4.1 Network Visualization Overview sub-Module
+### 4.1 Design thinking
 
-*What I discovered about the network structure*
+What I discovered about the network structure is that it is a directional dataset where the from node is always an agency and to node is always a supplier. This will construct an interesting network where the supplier nodes will be revolving the agency node. The communities are also easier to form with one or several agencies in the centre. Although this is the assumption, but this leads to separation of visualisation design that we will separate the overall network view and community network view.
 
-#### 4.1.1 Data preparation
+### 4.2 Network Module Architecture
 
-#### 4.1.2 Network Visualization Module Architecture
+\[diagram\]
 
-*Node-Edge Structure Creation* Agencies and suppliers are represented as nodes Procurement contracts form edges between them Node types are visually distinguished (agencies as diamonds, suppliers as circles)
+*Node-Edge Structure Creation*
 
-*Visual Design* Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs)
+Agencies and suppliers are represented as nodes Procurement contracts form edges between them Node types are visually distinguished (agencies as diamonds, suppliers as circles)
 
-Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
+### 4.3 SG Procurement Network Overview
 
-Below is the outputs (code and show) 1. Main network visualization (test & show case the following) - Interactive Elements (Selection, Hover, Zoom) - Edge thickness prototype - Network layout algorithms prototype - Size nodes by degree centrality - Performance mode
+In this module, 2 tabs are designed to illustrate a network overview and zoom-in view for a focused node and its connected nodes.
+
+#### **4.3.1 Network Plot**
+
+The network visualisation allows users to select date ranges and display methods to clearly see relationships between agencies and suppliers. Tooltips show important information like node names, number of contracts, and total award amounts, helping users quickly understand the key details about the connections they're viewing.
+
+::::: goals
+::: goals-header
+Design features / functionality
+:::
+
+::: goals-container
+-   Interactive network visualisation: Agency-supplier relationship
+-   Network metrics dashboard: Agency, Supplier, Top contracts
+-   **Filtering and control panel**: Data range, Agency type, Agency, Supplier, Tender category, Awaerd amount range, Maximum edges, Edge thickness options, Network layout, and node size option.
+:::
+:::::
+
+#### **Prototypes**
+
+::: panel-tabset
+## Firce-directed
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(igraph)
+library(scales)
+
+
+network_data <- readRDS("data/m3_processed_network_data.rds")
+nodes <- network_data$nodes
+edges <- network_data$edges
+agency_types <- network_data$agency_types
+
+min_award <- 0 
+max_award <- 100 
+
+# Filter edges by award amount
+edges <- edges %>%
+  filter(total_award_amount >= min_award & total_award_amount <= max_award)
+
+max_edges <- 300  
+if(nrow(edges) > max_edges) {
+  edges <- edges %>%
+    arrange(desc(total_award_amount)) %>%
+    slice_head(n = max_edges)
+}
+
+connected_nodes <- unique(c(edges$agency, edges$supplier_name))
+nodes <- nodes %>%
+  filter(name %in% connected_nodes)
+
+# -----------------------------------------
+# Prepare visualisation data
+# -----------------------------------------
+# Prepare nodes 
+nodes_vis <- nodes %>%
+  mutate(
+    id = name,
+    label = name,
+    color = case_when(
+      type == "agency" ~ "#A6CDC6",  
+      type == "supplier" ~ "#E4003A", 
+      TRUE ~ "#999999"               
+    ),
+    shape = case_when(
+      type == "agency" ~ "diamond",
+      type == "supplier" ~ "dot",
+      TRUE ~ "dot"
+    ),
+    title = paste0(
+      "<strong>", name, "</strong><br>",
+      "Type: ", type, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE),
+      "<br>First Contract: ", first_contract_date,
+      "<br>Last Contract: ", last_contract_date
+    )
+  )
+
+# Calculate and add degree centrality for node sizing
+graph <- igraph::graph_from_data_frame(
+  d = data.frame(from = edges$agency, to = edges$supplier_name),
+  directed = TRUE
+)
+
+# Calculate degree centrality
+degrees <- igraph::degree(graph, mode = "all")
+
+# Match degree values to nodes
+nodes_vis$degree <- 0  # Default value
+for(i in 1:nrow(nodes_vis)) {
+  if(nodes_vis$id[i] %in% names(degrees)) {
+    nodes_vis$degree[i] <- degrees[nodes_vis$id[i]]
+  }
+}
+
+# Scale node sizes based on degree
+if(length(unique(nodes_vis$degree)) > 1) {
+  log_degrees <- log1p(nodes_vis$degree)
+  nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
+                  (max(log_degrees) - min(log_degrees)) * 25
+} else {
+  nodes_vis$size <- 15
+}
+
+nodes_vis$title <- paste0(
+  nodes_vis$title,
+  "<br>Connections: ", nodes_vis$degree
+)
+
+# Prepare edges for visualization
+edges_vis <- edges %>%
+  mutate(
+    from = agency,
+    to = supplier_name,
+    # Scale edge thickness based on award amount
+    value = rescale(total_award_amount, to = c(1, 8)),
+    title = paste0(
+      "<strong>Agency-Supplier Connection</strong><br>",
+      "Agency: ", agency, "<br>",
+      "Supplier: ", supplier_name, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE)
+    )
+  )
+
+# Create network visualization
+network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
+  visNodes(
+    shadow = TRUE
+  ) %>%
+  visEdges(
+    arrows = "to",
+    color = list(
+      color = "#D3D3D3",
+      highlight = "#FF0000"
+    ),
+    smooth = TRUE
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+    nodesIdSelection = TRUE
+  ) %>%
+  visInteraction(
+    navigationButtons = TRUE,
+    dragNodes = TRUE,
+    zoomView = TRUE
+  ) %>%
+  visPhysics(
+    solver = "forceAtlas2Based",
+    stabilization = list(enabled = TRUE, iterations = 200)
+  ) %>%
+  visLayout(randomSeed = 123)  # For consistent layout
+
+
+network_vis
+```
+
+## Repulsion
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(igraph)
+library(scales)
+
+
+network_data <- readRDS("data/m3_processed_network_data.rds")
+nodes <- network_data$nodes
+edges <- network_data$edges
+agency_types <- network_data$agency_types
+
+min_award <- 0 
+max_award <- 100 
+
+# Filter edges by award amount
+edges <- edges %>%
+  filter(total_award_amount >= min_award & total_award_amount <= max_award)
+
+max_edges <- 300  
+if(nrow(edges) > max_edges) {
+  edges <- edges %>%
+    arrange(desc(total_award_amount)) %>%
+    slice_head(n = max_edges)
+}
+
+connected_nodes <- unique(c(edges$agency, edges$supplier_name))
+nodes <- nodes %>%
+  filter(name %in% connected_nodes)
+
+# -----------------------------------------
+# Prepare visualisation data
+# -----------------------------------------
+# Prepare nodes 
+nodes_vis <- nodes %>%
+  mutate(
+    id = name,
+    label = name,
+    color = case_when(
+      type == "agency" ~ "#A6CDC6",  
+      type == "supplier" ~ "#E4003A", 
+      TRUE ~ "#999999"               
+    ),
+    shape = case_when(
+      type == "agency" ~ "diamond",
+      type == "supplier" ~ "dot",
+      TRUE ~ "dot"
+    ),
+    title = paste0(
+      "<strong>", name, "</strong><br>",
+      "Type: ", type, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE),
+      "<br>First Contract: ", first_contract_date,
+      "<br>Last Contract: ", last_contract_date
+    )
+  )
+
+# Calculate and add degree centrality for node sizing
+graph <- igraph::graph_from_data_frame(
+  d = data.frame(from = edges$agency, to = edges$supplier_name),
+  directed = TRUE
+)
+
+# Calculate degree centrality
+degrees <- igraph::degree(graph, mode = "all")
+
+# Match degree values to nodes
+nodes_vis$degree <- 0  # Default value
+for(i in 1:nrow(nodes_vis)) {
+  if(nodes_vis$id[i] %in% names(degrees)) {
+    nodes_vis$degree[i] <- degrees[nodes_vis$id[i]]
+  }
+}
+
+# Scale node sizes based on degree
+if(length(unique(nodes_vis$degree)) > 1) {
+  log_degrees <- log1p(nodes_vis$degree)
+  nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
+                  (max(log_degrees) - min(log_degrees)) * 25
+} else {
+  nodes_vis$size <- 15
+}
+
+nodes_vis$title <- paste0(
+  nodes_vis$title,
+  "<br>Connections: ", nodes_vis$degree
+)
+
+# Prepare edges for visualization
+edges_vis <- edges %>%
+  mutate(
+    from = agency,
+    to = supplier_name,
+    # Scale edge thickness based on award amount
+    value = rescale(total_award_amount, to = c(1, 8)),
+    title = paste0(
+      "<strong>Agency-Supplier Connection</strong><br>",
+      "Agency: ", agency, "<br>",
+      "Supplier: ", supplier_name, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE)
+    )
+  )
+
+# Create network visualization
+network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
+  visNodes(
+    shadow = TRUE
+  ) %>%
+  visEdges(
+    arrows = "to",
+    color = list(
+      color = "#D3D3D3",
+      highlight = "#FF0000"
+    ),
+    smooth = TRUE
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+    nodesIdSelection = TRUE
+  ) %>%
+  visInteraction(
+    navigationButtons = TRUE,
+    dragNodes = TRUE,
+    zoomView = TRUE
+  ) %>%
+  visPhysics(
+    solver = "repulsion",
+    stabilization = list(enabled = TRUE, iterations = 200)
+  ) %>%
+  visLayout(randomSeed = 123)  # For consistent layout
+
+network_vis
+```
+
+## barnesHut
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(igraph)
+library(scales)
+
+
+network_data <- readRDS("data/m3_processed_network_data.rds")
+nodes <- network_data$nodes
+edges <- network_data$edges
+agency_types <- network_data$agency_types
+
+min_award <- 0 
+max_award <- 100 
+
+# Filter edges by award amount
+edges <- edges %>%
+  filter(total_award_amount >= min_award & total_award_amount <= max_award)
+
+max_edges <- 300  
+if(nrow(edges) > max_edges) {
+  edges <- edges %>%
+    arrange(desc(total_award_amount)) %>%
+    slice_head(n = max_edges)
+}
+
+connected_nodes <- unique(c(edges$agency, edges$supplier_name))
+nodes <- nodes %>%
+  filter(name %in% connected_nodes)
+
+# -----------------------------------------
+# Prepare visualisation data
+# -----------------------------------------
+# Prepare nodes 
+nodes_vis <- nodes %>%
+  mutate(
+    id = name,
+    label = name,
+    color = case_when(
+      type == "agency" ~ "#A6CDC6",  
+      type == "supplier" ~ "#E4003A", 
+      TRUE ~ "#999999"               
+    ),
+    shape = case_when(
+      type == "agency" ~ "diamond",
+      type == "supplier" ~ "dot",
+      TRUE ~ "dot"
+    ),
+    title = paste0(
+      "<strong>", name, "</strong><br>",
+      "Type: ", type, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE),
+      "<br>First Contract: ", first_contract_date,
+      "<br>Last Contract: ", last_contract_date
+    )
+  )
+
+# Calculate and add degree centrality for node sizing
+graph <- igraph::graph_from_data_frame(
+  d = data.frame(from = edges$agency, to = edges$supplier_name),
+  directed = TRUE
+)
+
+# Calculate degree centrality
+degrees <- igraph::degree(graph, mode = "all")
+
+# Match degree values to nodes
+nodes_vis$degree <- 0  # Default value
+for(i in 1:nrow(nodes_vis)) {
+  if(nodes_vis$id[i] %in% names(degrees)) {
+    nodes_vis$degree[i] <- degrees[nodes_vis$id[i]]
+  }
+}
+
+# Scale node sizes based on degree
+if(length(unique(nodes_vis$degree)) > 1) {
+  log_degrees <- log1p(nodes_vis$degree)
+  nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
+                  (max(log_degrees) - min(log_degrees)) * 25
+} else {
+  nodes_vis$size <- 15
+}
+
+nodes_vis$title <- paste0(
+  nodes_vis$title,
+  "<br>Connections: ", nodes_vis$degree
+)
+
+# Prepare edges for visualization
+edges_vis <- edges %>%
+  mutate(
+    from = agency,
+    to = supplier_name,
+    # Scale edge thickness based on award amount
+    value = rescale(total_award_amount, to = c(1, 8)),
+    title = paste0(
+      "<strong>Agency-Supplier Connection</strong><br>",
+      "Agency: ", agency, "<br>",
+      "Supplier: ", supplier_name, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE)
+    )
+  )
+
+# Create network visualization
+network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
+  visNodes(
+    shadow = TRUE
+  ) %>%
+  visEdges(
+    arrows = "to",
+    color = list(
+      color = "#D3D3D3",
+      highlight = "#FF0000"
+    ),
+    smooth = TRUE
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+    nodesIdSelection = TRUE
+  ) %>%
+  visInteraction(
+    navigationButtons = TRUE,
+    dragNodes = TRUE,
+    zoomView = TRUE
+  ) %>%
+  visPhysics(
+    solver = "barnesHut",
+    stabilization = list(enabled = TRUE, iterations = 200)
+  ) %>%
+  visLayout(randomSeed = 123)  # For consistent layout
+
+network_vis
+```
+
+## hierarchicalRepulsion
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(igraph)
+library(scales)
+
+
+network_data <- readRDS("data/m3_processed_network_data.rds")
+nodes <- network_data$nodes
+edges <- network_data$edges
+agency_types <- network_data$agency_types
+
+min_award <- 0 
+max_award <- 100 
+
+# Filter edges by award amount
+edges <- edges %>%
+  filter(total_award_amount >= min_award & total_award_amount <= max_award)
+
+max_edges <- 300  
+if(nrow(edges) > max_edges) {
+  edges <- edges %>%
+    arrange(desc(total_award_amount)) %>%
+    slice_head(n = max_edges)
+}
+
+connected_nodes <- unique(c(edges$agency, edges$supplier_name))
+nodes <- nodes %>%
+  filter(name %in% connected_nodes)
+
+# -----------------------------------------
+# Prepare visualisation data
+# -----------------------------------------
+# Prepare nodes 
+nodes_vis <- nodes %>%
+  mutate(
+    id = name,
+    label = name,
+    color = case_when(
+      type == "agency" ~ "#A6CDC6",  
+      type == "supplier" ~ "#E4003A", 
+      TRUE ~ "#999999"               
+    ),
+    shape = case_when(
+      type == "agency" ~ "diamond",
+      type == "supplier" ~ "dot",
+      TRUE ~ "dot"
+    ),
+    title = paste0(
+      "<strong>", name, "</strong><br>",
+      "Type: ", type, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE),
+      "<br>First Contract: ", first_contract_date,
+      "<br>Last Contract: ", last_contract_date
+    )
+  )
+
+# Calculate and add degree centrality for node sizing
+graph <- igraph::graph_from_data_frame(
+  d = data.frame(from = edges$agency, to = edges$supplier_name),
+  directed = TRUE
+)
+
+# Calculate degree centrality
+degrees <- igraph::degree(graph, mode = "all")
+
+# Match degree values to nodes
+nodes_vis$degree <- 0  # Default value
+for(i in 1:nrow(nodes_vis)) {
+  if(nodes_vis$id[i] %in% names(degrees)) {
+    nodes_vis$degree[i] <- degrees[nodes_vis$id[i]]
+  }
+}
+
+# Scale node sizes based on degree
+if(length(unique(nodes_vis$degree)) > 1) {
+  log_degrees <- log1p(nodes_vis$degree)
+  nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
+                  (max(log_degrees) - min(log_degrees)) * 25
+} else {
+  nodes_vis$size <- 15
+}
+
+nodes_vis$title <- paste0(
+  nodes_vis$title,
+  "<br>Connections: ", nodes_vis$degree
+)
+
+# Prepare edges for visualization
+edges_vis <- edges %>%
+  mutate(
+    from = agency,
+    to = supplier_name,
+    # Scale edge thickness based on award amount
+    value = rescale(total_award_amount, to = c(1, 8)),
+    title = paste0(
+      "<strong>Agency-Supplier Connection</strong><br>",
+      "Agency: ", agency, "<br>",
+      "Supplier: ", supplier_name, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE)
+    )
+  )
+
+# Create network visualization
+network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
+  visNodes(
+    shadow = TRUE
+  ) %>%
+  visEdges(
+    arrows = "to",
+    color = list(
+      color = "#D3D3D3",
+      highlight = "#FF0000"
+    ),
+    smooth = TRUE
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+    nodesIdSelection = TRUE
+  ) %>%
+  visInteraction(
+    navigationButtons = TRUE,
+    dragNodes = TRUE,
+    zoomView = TRUE
+  ) %>%
+  visPhysics(
+    solver = "hierarchicalRepulsion",
+    stabilization = list(enabled = TRUE, iterations = 200)
+  ) %>%
+  visLayout(randomSeed = 123)  # For consistent layout
+
+network_vis
+```
+
+## Award amt & Edges ++
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(igraph)
+library(scales)
+
+
+network_data <- readRDS("data/m3_processed_network_data.rds")
+nodes <- network_data$nodes
+edges <- network_data$edges
+agency_types <- network_data$agency_types
+
+min_award <- 1000000
+max_award <- 10000000 
+
+# Filter edges by award amount
+edges <- edges %>%
+  filter(total_award_amount >= min_award & total_award_amount <= max_award)
+
+max_edges <- 1500  
+if(nrow(edges) > max_edges) {
+  edges <- edges %>%
+    arrange(desc(total_award_amount)) %>%
+    slice_head(n = max_edges)
+}
+
+connected_nodes <- unique(c(edges$agency, edges$supplier_name))
+nodes <- nodes %>%
+  filter(name %in% connected_nodes)
+
+# -----------------------------------------
+# Prepare visualisation data
+# -----------------------------------------
+# Prepare nodes 
+nodes_vis <- nodes %>%
+  mutate(
+    id = name,
+    label = name,
+    color = case_when(
+      type == "agency" ~ "#A6CDC6",  
+      type == "supplier" ~ "#E4003A", 
+      TRUE ~ "#999999"               
+    ),
+    shape = case_when(
+      type == "agency" ~ "diamond",
+      type == "supplier" ~ "dot",
+      TRUE ~ "dot"
+    ),
+    title = paste0(
+      "<strong>", name, "</strong><br>",
+      "Type: ", type, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE),
+      "<br>First Contract: ", first_contract_date,
+      "<br>Last Contract: ", last_contract_date
+    )
+  )
+
+# Calculate and add degree centrality for node sizing
+graph <- igraph::graph_from_data_frame(
+  d = data.frame(from = edges$agency, to = edges$supplier_name),
+  directed = TRUE
+)
+
+# Calculate degree centrality
+degrees <- igraph::degree(graph, mode = "all")
+
+# Match degree values to nodes
+nodes_vis$degree <- 0  # Default value
+for(i in 1:nrow(nodes_vis)) {
+  if(nodes_vis$id[i] %in% names(degrees)) {
+    nodes_vis$degree[i] <- degrees[nodes_vis$id[i]]
+  }
+}
+
+# Scale node sizes based on degree
+if(length(unique(nodes_vis$degree)) > 1) {
+  log_degrees <- log1p(nodes_vis$degree)
+  nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
+                  (max(log_degrees) - min(log_degrees)) * 25
+} else {
+  nodes_vis$size <- 15
+}
+
+nodes_vis$title <- paste0(
+  nodes_vis$title,
+  "<br>Connections: ", nodes_vis$degree
+)
+
+# Prepare edges for visualization
+edges_vis <- edges %>%
+  mutate(
+    from = agency,
+    to = supplier_name,
+    # Scale edge thickness based on award amount
+    value = rescale(total_award_amount, to = c(1, 8)),
+    title = paste0(
+      "<strong>Agency-Supplier Connection</strong><br>",
+      "Agency: ", agency, "<br>",
+      "Supplier: ", supplier_name, "<br>",
+      "Total Contracts: ", total_contracts, "<br>",
+      "Total Award Amount: $", 
+      format(total_award_amount, big.mark = ",", scientific = FALSE)
+    )
+  )
+
+# Create network visualization
+network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
+  visNodes(
+    shadow = TRUE
+  ) %>%
+  visEdges(
+    arrows = "to",
+    color = list(
+      color = "#D3D3D3",
+      highlight = "#FF0000"
+    ),
+    smooth = TRUE
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+    nodesIdSelection = TRUE
+  ) %>%
+  visInteraction(
+    navigationButtons = TRUE,
+    dragNodes = TRUE,
+    zoomView = TRUE
+  ) %>%
+  visPhysics(
+    solver = "forceAtlas2Based",
+    stabilization = list(enabled = TRUE, iterations = 200)
+  ) %>%
+  visLayout(randomSeed = 123)  # For consistent layout
+
+
+network_vis
+```
+:::
+
+#### **4.3.2 Ego centric plot**
+The Ego centric network visualisation allows users to zoom in to a selected node without distractions. Tooltips show important information like node names, type, number of contracts, and total award amounts, helping users quickly understand the key details about the connections they're viewing. There will also be a metric table providing detailed information of the nodes and edges.
+
+::::: goals
+::: goals-header
+Design features / functionality
+:::
+
+::: goals-container
+-   Interactive network visualisation: Relationship of ego node and all of its connections
+-   Network metrics dashboard: Agency, Supplier, Connections
+-   Only appears when a node is selected from the main network plot
+:::
+:::::
+
+#### **Prototypes**
+
+::: panel-tabset
+## Ego Agency
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(scales)
+
+plot_ego_network <- function(network_data, selected_node) {
+  nodes <- network_data$nodes
+  edges <- network_data$edges
+  
+  if(selected_node %in% nodes$name[nodes$type == "agency"]) {
+    # Agency selected
+    ego_edges <- edges %>% filter(agency == selected_node)
+    # CHANGE 2: PROPERLY COLLECT ALL CONNECTED NODES FOR AN AGENCY
+    connected_nodes <- unique(c(selected_node, ego_edges$supplier_name))
+    node_type <- "agency"
+  } else if(selected_node %in% nodes$name[nodes$type == "supplier"]) {
+    # Supplier selected
+    ego_edges <- edges %>% filter(supplier_name == selected_node)
+    # CHANGE 3: PROPERLY COLLECT ALL CONNECTED NODES FOR A SUPPLIER
+    connected_nodes <- unique(c(selected_node, ego_edges$agency))
+    node_type <- "supplier"
+  } else {
+    # CHANGE 4: IMPROVED ERROR MESSAGE
+    stop("Selected node not found in network data or node type is ambiguous")
+  }
+  
+  all_connected <- c(connected_nodes, selected_node)
+  
+  ego_nodes <- nodes %>% filter(name %in% connected_nodes)
+  
+  # Prepare nodes 
+  nodes_vis <- ego_nodes %>%
+    mutate(
+      id = name,
+      label = name,
+      # Replicate the exact color scheme from the Shiny app
+      color = case_when(
+        name == selected_node ~ "#F3c623",  
+        type == "supplier" ~ "#E4003A",     
+        type == "agency" ~ "#A6CDC6",       
+        TRUE ~ "#999999"                    
+      ),
+      shape = case_when(
+        name == selected_node ~ "star",     
+        type == "supplier" ~ "dot",         
+        type == "agency" ~ "diamond",       
+        TRUE ~ "dot"                        
+      ),
+      size = ifelse(name == selected_node, 35, 20),
+      # Tooltip
+      title = paste0(
+        "<strong>", name, "</strong><br>",
+        "Type: ", type, "<br>",
+        "Total Contracts: ", total_contracts, "<br>",
+        "Total Award Amount: S$", 
+        format(total_award_amount, big.mark = ",", scientific = FALSE)
+      )
+    )
+  
+  # Prepare edges 
+  edges_vis <- ego_edges %>%
+    mutate(
+      from = agency,
+      to = supplier_name,
+      # Scale edge thickness based on award amount
+      value = rescale(total_award_amount, to = c(1, 10)),
+      # Edge tooltip
+      title = paste0(
+        "Agency: ", agency, "<br>",
+        "Supplier: ", supplier_name, "<br>",
+        "Total Contracts: ", total_contracts, "<br>",
+        "Total Award Amount: S$", 
+        format(total_award_amount, big.mark = ",", scientific = FALSE)
+      )
+    )
+  
+  visNetwork(nodes_vis, edges_vis) %>%
+    visEdges(
+      arrows = "to",
+      color = list(
+        color = "#D3D3D3",
+        highlight = "#FF0000"
+      ),
+      smooth = TRUE
+    ) %>%
+    visOptions(
+      highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE)
+    ) %>%
+    visPhysics(
+      solver = "forceAtlas2Based",
+      stabilization = list(enabled = TRUE, iterations = 500)
+    ) %>%
+    visInteraction(
+      navigationButtons = TRUE,
+      dragNodes = TRUE,
+      zoomView = TRUE
+    ) %>%
+    visLayout(randomSeed = 123)  # Consistent layout
+}
+
+
+supplier <- network_data$edges$supplier_name[1]
+
+plot_ego_network(network_data, supplier)
+```
+
+## Ego Supplier
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(visNetwork)
+library(scales)
+
+plot_ego_network <- function(network_data, selected_node) {
+  nodes <- network_data$nodes
+  edges <- network_data$edges
+  
+  # Get connections for the selected node
+  if(selected_node %in% edges$supplier_name) {
+    # use supplier
+    ego_edges <- edges %>% filter(supplier_name == selected_node)
+    connected_nodes <- unique(ego_edges$agency)
+    node_type <- "supplier"
+  } else if(selected_node %in% edges$agency) {
+    
+    ego_edges <- edges %>% filter(agency == selected_node)
+    connected_nodes <- unique(ego_edges$supplier_name)
+    node_type <- "agency"
+  } else {
+    stop("Selected node not found in network data")
+  }
+  
+  all_connected <- c(connected_nodes, selected_node)
+  
+  ego_nodes <- nodes %>% filter(name %in% all_connected)
+  
+  # Prepare nodes 
+  nodes_vis <- ego_nodes %>%
+    mutate(
+      id = name,
+      label = name,
+      # Replicate the exact color scheme from the Shiny app
+      color = case_when(
+        name == selected_node ~ "#F3c623",  
+        type == "supplier" ~ "#E4003A",     
+        type == "agency" ~ "#A6CDC6",       
+        TRUE ~ "#999999"                    
+      ),
+      shape = case_when(
+        name == selected_node ~ "star",     
+        type == "supplier" ~ "dot",         
+        type == "agency" ~ "diamond",       
+        TRUE ~ "dot"                        
+      ),
+      size = ifelse(name == selected_node, 35, 20),
+      # Tooltip
+      title = paste0(
+        "<strong>", name, "</strong><br>",
+        "Type: ", type, "<br>",
+        "Total Contracts: ", total_contracts, "<br>",
+        "Total Award Amount: S$", 
+        format(total_award_amount, big.mark = ",", scientific = FALSE)
+      )
+    )
+  
+  # Prepare edges 
+  edges_vis <- ego_edges %>%
+    mutate(
+      from = agency,
+      to = supplier_name,
+      # Scale edge thickness based on award amount
+      value = rescale(total_award_amount, to = c(1, 10)),
+      # Edge tooltip
+      title = paste0(
+        "Agency: ", agency, "<br>",
+        "Supplier: ", supplier_name, "<br>",
+        "Total Contracts: ", total_contracts, "<br>",
+        "Total Award Amount: S$", 
+        format(total_award_amount, big.mark = ",", scientific = FALSE)
+      )
+    )
+  
+  visNetwork(nodes_vis, edges_vis) %>%
+    visEdges(
+      arrows = "to",
+      color = list(
+        color = "#D3D3D3",
+        highlight = "#FF0000"
+      ),
+      smooth = TRUE
+    ) %>%
+    visOptions(
+      highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE)
+    ) %>%
+    visPhysics(
+      solver = "forceAtlas2Based",
+      stabilization = list(enabled = TRUE, iterations = 500)
+    ) %>%
+    visInteraction(
+      navigationButtons = TRUE,
+      dragNodes = TRUE,
+      zoomView = TRUE
+    ) %>%
+    visLayout(randomSeed = 123)  # Consistent layout
+}
+
+
+supplier <- network_data$edges$agency[1]
+
+plot_ego_network(network_data, supplier)
+```
+
+:::
+
+### 4.4 Community Network Detection
+In this module, network community is the focus of the analysis. 2 tabs are designed to illustrate a community network overview and zoom-in view for a focused community.The communities are distinguished by colours. When user selects a community, the selection will sync to the **Community Explorer** tab. User can then zoom in to view the community members and their information.
+
+::::: goals
+::: goals-header
+Design features / functionality
+:::
+
+::: goals-container
+-   Various methods for community detection
+-   Community focus view: 
+-   **Filtering and control panel**: Date range, Award amount, Agency type, Agency, Aupplier, Tender type, Maximun edges, Network layout, Commnity detection algorithm, 
+
+:::
+:::::
+
+
+#### **Prototypes**
+
+::: panel-tabset
+## Edge-betweeness
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(tidygraph)
+library(igraph)
+library(readr)
+library(visNetwork)
+
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "fr"  # Force-directed (FR)
+algorithm <- "Edge-betweenness"  
+centrality_measure <- "Degree"  # for node sizing
+
+# Load the data
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+# Add node type attribute
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+# Detect communities using Edge-betweenness
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_edge_betweenness()))
+
+# Calculate degree centrality
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+# Prepare nodes for visNetwork
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+# Get edge list
+edges_list <- as_edgelist(graph, names = TRUE)
+edges_df <- data.frame(
+  from = edges_list[, 1],
+  to = edges_list[, 2],
+  stringsAsFactors = FALSE
+)
+
+# Add weights and tooltips to edges
+edges_df$weight <- edge_attr(graph, "weight")
+edges_df$tender_count <- edge_attr(graph, "tender_count")
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+
+# Calculate edge width based on weight
+edges_df$width <- case_when(
+  !length(unique(edges_df$weight)) > 1 ~ 5,
+  TRUE ~ 3 + 25 * log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])) / 
+    max(log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])))
+)
+
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -100,
+                                     centralGravity = 0.01,
+                                     springLength = 150,
+                                     springConstant = 0.05),
+             stabilization = list(iterations = 200)) %>%
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12),
+           shadow = TRUE) %>%
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.7),
+           width = "width",
+           hoverWidth = 2,
+           selectionWidth = 2) %>%
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100) %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px") %>%
+  visLayout(randomSeed = 123)
+
+community_network <- community_network %>%
+  htmlwidgets::onRender(paste0(
+    "function(el, x, data) {
+    var title = document.createElement('div');
+    title.style.textAlign = 'center';
+    title.style.fontWeight = 'bold';
+    title.innerHTML = 'Community Detection using Edge-betweenness", 
+    "<br>", nrow(nodes_df), " nodes, ", 
+    nrow(edges_df), " connections';
+    title.style.fontSize = '14px';
+    title.style.marginBottom = '10px';
+    el.insertBefore(title, el.firstChild);
+  }"))
+
+community_network
+```
+## Louvain
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(tidygraph)
+library(igraph)
+library(readr)
+library(visNetwork)
+
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "fr"  # Force-directed (FR)
+algorithm <- "Louvain"  
+centrality_measure <- "Degree"  # for node sizing
+
+# Load the data
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+# Add node type attribute
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+# Detect communities using Edge-betweenness
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_louvain()))
+
+# Calculate degree centrality
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+# Prepare nodes for visNetwork
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+# Get edge list
+edges_list <- as_edgelist(graph, names = TRUE)
+edges_df <- data.frame(
+  from = edges_list[, 1],
+  to = edges_list[, 2],
+  stringsAsFactors = FALSE
+)
+
+# Add weights and tooltips to edges
+edges_df$weight <- edge_attr(graph, "weight")
+edges_df$tender_count <- edge_attr(graph, "tender_count")
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+
+# Calculate edge width based on weight
+edges_df$width <- case_when(
+  !length(unique(edges_df$weight)) > 1 ~ 5,
+  TRUE ~ 3 + 25 * log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])) / 
+    max(log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])))
+)
+
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -100,
+                                     centralGravity = 0.01,
+                                     springLength = 150,
+                                     springConstant = 0.05),
+             stabilization = list(iterations = 200)) %>%
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12),
+           shadow = TRUE) %>%
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.7),
+           width = "width",
+           hoverWidth = 2,
+           selectionWidth = 2) %>%
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100) %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px") %>%
+  visLayout(randomSeed = 123)
+
+community_network <- community_network %>%
+  htmlwidgets::onRender(paste0(
+    "function(el, x, data) {
+    var title = document.createElement('div');
+    title.style.textAlign = 'center';
+    title.style.fontWeight = 'bold';
+    title.innerHTML = 'Community Detection using Edge-betweenness", 
+    "<br>", nrow(nodes_df), " nodes, ", 
+    nrow(edges_df), " connections';
+    title.style.fontSize = '14px';
+    title.style.marginBottom = '10px';
+    el.insertBefore(title, el.firstChild);
+  }"))
+
+community_network
+```
+## Walktrap
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(tidygraph)
+library(igraph)
+library(readr)
+library(visNetwork)
+
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "fr"  # Force-directed (FR)
+algorithm <- "Walktrap"  
+centrality_measure <- "Degree"  # for node sizing
+
+# Load the data
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+# Add node type attribute
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+# Detect communities using Edge-betweenness
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_walktrap()))
+
+# Calculate degree centrality
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+# Prepare nodes for visNetwork
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+# Get edge list
+edges_list <- as_edgelist(graph, names = TRUE)
+edges_df <- data.frame(
+  from = edges_list[, 1],
+  to = edges_list[, 2],
+  stringsAsFactors = FALSE
+)
+
+# Add weights and tooltips to edges
+edges_df$weight <- edge_attr(graph, "weight")
+edges_df$tender_count <- edge_attr(graph, "tender_count")
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+
+# Calculate edge width based on weight
+edges_df$width <- case_when(
+  !length(unique(edges_df$weight)) > 1 ~ 5,
+  TRUE ~ 3 + 25 * log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])) / 
+    max(log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])))
+)
+
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -100,
+                                     centralGravity = 0.01,
+                                     springLength = 150,
+                                     springConstant = 0.05),
+             stabilization = list(iterations = 200)) %>%
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12),
+           shadow = TRUE) %>%
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.7),
+           width = "width",
+           hoverWidth = 2,
+           selectionWidth = 2) %>%
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100) %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px") %>%
+  visLayout(randomSeed = 123)
+
+community_network <- community_network %>%
+  htmlwidgets::onRender(paste0(
+    "function(el, x, data) {
+    var title = document.createElement('div');
+    title.style.textAlign = 'center';
+    title.style.fontWeight = 'bold';
+    title.innerHTML = 'Community Detection using Edge-betweenness", 
+    "<br>", nrow(nodes_df), " nodes, ", 
+    nrow(edges_df), " connections';
+    title.style.fontSize = '14px';
+    title.style.marginBottom = '10px';
+    el.insertBefore(title, el.firstChild);
+  }"))
+
+community_network
+```
+
+
+:::
+
+::: panel-tabset
+
+Layout types
+We will use visNetwork's built-in layout options
+## FR
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(tidygraph)
+library(igraph)
+library(readr)
+library(visNetwork)
+
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "fr"  # Force-directed (FR)
+algorithm <- "Louvain"  
+centrality_measure <- "Degree"  # for node sizing
+
+# Load the data
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+# Add node type attribute
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+# Detect communities using Edge-betweenness
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_louvain()))
+
+# Calculate degree centrality
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+# Prepare nodes for visNetwork
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+# Get edge list
+edges_list <- as_edgelist(graph, names = TRUE)
+edges_df <- data.frame(
+  from = edges_list[, 1],
+  to = edges_list[, 2],
+  stringsAsFactors = FALSE
+)
+
+# Add weights and tooltips to edges
+edges_df$weight <- edge_attr(graph, "weight")
+edges_df$tender_count <- edge_attr(graph, "tender_count")
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+
+# Calculate edge width based on weight
+edges_df$width <- case_when(
+  !length(unique(edges_df$weight)) > 1 ~ 5,
+  TRUE ~ 3 + 25 * log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])) / 
+    max(log10(1 + edges_df$weight/min(edges_df$weight[edges_df$weight > 0])))
+)
+
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -100,
+                                     centralGravity = 0.01,
+                                     springLength = 150,
+                                     springConstant = 0.05),
+             stabilization = list(iterations = 200)) %>%
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12),
+           shadow = TRUE) %>%
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.7),
+           width = "width",
+           hoverWidth = 2,
+           selectionWidth = 2) %>%
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100) %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px") %>%
+  visLayout(randomSeed = 123)
+
+community_network <- community_network %>%
+  htmlwidgets::onRender(paste0(
+    "function(el, x, data) {
+    var title = document.createElement('div');
+    title.style.textAlign = 'center';
+    title.style.fontWeight = 'bold';
+    title.innerHTML = 'Community Detection using Edge-betweenness", 
+    "<br>", nrow(nodes_df), " nodes, ", 
+    nrow(edges_df), " connections';
+    title.style.fontSize = '14px';
+    title.style.marginBottom = '10px';
+    el.insertBefore(title, el.firstChild);
+  }"))
+
+community_network
+```
+
+## Kamada-Kawai (VisNetwork)
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+# v2
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "kk"  # Kamada-Kawai
+algorithm <- "Louvain"  
+centrality_measure <- "Degree"  # for node sizing
+
+# Load the data
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+# Add node type attribute
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+# Detect communities using Louvain algorithm
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_louvain()))
+
+# Calculate degree centrality
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+# Prepare nodes for visNetwork
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+# Get edge list
+edges_df <- edges  # Use the original edges dataframe to ensure all edges are included
+
+# Add tooltips to edges
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+
+# Calculate edge width based on award amount with proper normalization
+min_width <- 0.5  # Minimum edge width
+max_width <- 4    # Maximum edge width
+
+if(length(unique(edges_df$weight)) > 1) {
+  # Only normalize if we have varying weights
+  edges_df$width <- min_width + (max_width - min_width) * 
+    (edges_df$weight - min(edges_df$weight)) / (max(edges_df$weight) - min(edges_df$weight))
+} else {
+  # If all weights are the same, use a default width
+  edges_df$width <- (min_width + max_width) / 2
+}
+
+# Create the network visualization
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  # Using barnesHut physics for Kamada-Kawai layout as per Shiny app
+  visPhysics(solver = "barnesHut",
+             barnesHut = list(
+               gravitationalConstant = -2000,  # Stronger gravity for better clustering
+               centralGravity = 0.1,           # Slightly higher central gravity
+               springLength = 150,             # Spring length between nodes
+               springConstant = 0.05,          # Spring stiffness
+               damping = 0.09                  # Damping factor
+             ),
+             stabilization = list(
+               enabled = TRUE,
+               iterations = 1000,              # More iterations for better stabilization
+               updateInterval = 50,
+               fit = TRUE
+             )) %>%
+  # Node styling
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12, color = "#333333"),
+           shadow = TRUE) %>%
+  # Edge styling with reduced opacity for better visibility
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.5),  # Reduced opacity
+           width = "width",
+           hoverWidth = 1.5,
+           selectionWidth = 1.5) %>%
+  # Interaction options
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100,
+                 hideEdgesOnDrag = TRUE) %>%
+  # For community selection
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px",
+             nodesIdSelection = TRUE) 
+
+community_network
+```
+
+## Kamada-Kawai (iGraph)
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+library(dplyr)
+library(tidygraph)
+library(igraph)
+library(readr)
+library(visNetwork)
+
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "Kamada-Kawai"  
+algorithm <- "Louvain"  
+centrality_measure <- "Degree"  
+
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+
+edges_df <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges_df) > max_edges) {
+  edges_df <- edges_df %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+all_nodes <- unique(c(edges_df$from, edges_df$to))
+nodes_df <- data.frame(
+  id = all_nodes,
+  label = all_nodes,
+  name = all_nodes,
+  stringsAsFactors = FALSE
+)
+
+graph <- graph_from_data_frame(edges_df, directed = FALSE, vertices = nodes_df)
+
+V(graph)$type <- ifelse(V(graph)$name %in% unique(edges_df$from), "Agency", "Supplier")
+
+communities <- cluster_louvain(graph)
+V(graph)$community <- as.factor(membership(communities))
+
+V(graph)$centrality <- degree(graph)
+
+layout_kk <- layout_with_kk(graph, maxiter = 500)
+
+normalize_layout <- function(layout) {
+  layout[,1] <- (layout[,1] - min(layout[,1])) / (max(layout[,1]) - min(layout[,1]))
+  layout[,2] <- (layout[,2] - min(layout[,2])) / (max(layout[,2]) - min(layout[,2]))
+  return(layout)
+}
+
+layout_kk_norm <- normalize_layout(layout_kk)
+
+nodes_df <- data.frame(
+  id = V(graph)$name,
+  label = V(graph)$name,
+  group = as.character(V(graph)$community),
+  value = V(graph)$centrality,
+  type = V(graph)$type,
+  x = layout_kk_norm[,1] * 1000,  # Scale for better visualization
+  y = layout_kk_norm[,2] * 1000,
+  stringsAsFactors = FALSE
+)
+
+nodes_df$title <- paste0("<p><strong>", nodes_df$label, "</strong><br>",
+                         "Type: ", nodes_df$type, "<br>",
+                         "Community: ", nodes_df$group, "<br>",
+                         "Degree: ", round(nodes_df$value, 3), "</p>")
+
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+
+min_width <- 0.5  
+max_width <- 4    
+
+if(length(unique(edges_df$weight)) > 1) {
+  edges_df$width <- min_width + (max_width - min_width) * 
+    (edges_df$weight - min(edges_df$weight)) / (max(edges_df$weight) - min(edges_df$weight))
+} else {
+  edges_df$width <- (min_width + max_width) / 2
+}
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(enabled = FALSE) %>%  # Disable physics to keep our pre-calculated layout
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12),
+           shadow = TRUE) %>%
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.5),  # Reduced opacity for better visibility
+           width = "width",
+           hoverWidth = 1.5,  # Reduced hover width
+           selectionWidth = 1.5) %>%  # Reduced selection width
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100) %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px")
+
+community_network <- community_network %>%
+  htmlwidgets::onRender(paste0(
+    "function(el, x, data) {
+    var title = document.createElement('div');
+    title.style.textAlign = 'center';
+    title.style.fontWeight = 'bold';
+    title.innerHTML = 'Community Detection using Kamada-Kawai Layout", 
+    "<br>", nrow(nodes_df), " nodes, ", 
+    nrow(edges_df), " connections';
+    title.style.fontSize = '14px';
+    title.style.marginBottom = '10px';
+    el.insertBefore(title, el.firstChild);
+  }"))
+
+community_network
+```
+
+
+## DrL
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "drl"  
+algorithm <- "Louvain"  
+centrality_measure <- "Degree"  # for node sizing
+
+# Load the data
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+# Add node type attribute
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+# Detect communities using Louvain algorithm
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_louvain()))
+
+# Calculate degree centrality
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+# Prepare nodes for visNetwork
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+edges_df <- edges  
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+min_width <- 0.5  
+max_width <- 4   
+
+if(length(unique(edges_df$weight)) > 1) {
+  edges_df$width <- min_width + (max_width - min_width) * 
+    (edges_df$weight - min(edges_df$weight)) / (max(edges_df$weight) - min(edges_df$weight))
+} else {
+  edges_df$width <- (min_width + max_width) / 2
+}
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(solver = "repulsion",
+             repulsion = list(
+               nodeDistance = 120,    
+               centralGravity = 0.02,  
+               springLength = 200,     
+               springConstant = 0.05,  
+               damping = 0.09          
+             ),
+             stabilization = list(
+               enabled = TRUE,
+               iterations = 1000,      
+               updateInterval = 50,
+               fit = TRUE
+             )) %>%
+
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12, color = "#333333"),
+           shadow = TRUE) %>%
+
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.5),  # Reduced opacity
+           width = "width",
+           hoverWidth = 1.5,
+           selectionWidth = 1.5) %>%
+
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100,
+                 hideEdgesOnDrag = TRUE) %>%
+
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px",
+             nodesIdSelection = TRUE) 
+
+
+community_network
+```
+
+
+## GraphOpt
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+award_min <- 0
+award_max <- 100
+max_edges <- 500
+layout_type <- "graphopt"  
+algorithm <- "Louvain"  
+centrality_measure <- "Degree"  # for node sizing
+
+community_data <- read_csv("data/network_community_data.csv")
+
+community_data_processed <- community_data %>%
+  mutate(
+    award_date = as.Date(award_date),
+    awarded_amt = as.numeric(awarded_amt)
+  )
+
+filtered_data <- community_data_processed %>%
+  filter(awarded_amt >= award_min & awarded_amt <= award_max)
+
+edges <- filtered_data %>%
+  group_by(agency, supplier_name) %>%
+  summarize(weight = sum(awarded_amt, na.rm = TRUE), 
+            tender_count = n(), 
+            .groups = "drop") %>%
+  rename(from = agency, to = supplier_name)
+
+if(nrow(edges) > max_edges) {
+  edges <- edges %>% 
+    arrange(desc(weight)) %>%
+    slice_head(n = max_edges)
+}
+
+nodes <- data.frame(
+  name = unique(c(edges$from, edges$to)),
+  stringsAsFactors = FALSE
+)
+
+graph <- tbl_graph(
+  nodes = nodes,
+  edges = edges,
+  directed = FALSE
+)
+
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(
+    type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
+  )
+
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(community = as.factor(group_louvain()))
+
+graph <- graph %>%
+  activate(nodes) %>%
+  mutate(centrality = centrality_degree())
+
+nodes_df <- graph %>%
+  activate(nodes) %>%
+  as_tibble() %>%
+  mutate(
+    id = name,
+    label = name,
+    group = as.character(community),
+    value = centrality,
+    title = paste0("<p><strong>", name, "</strong><br>",
+                   "Type: ", type, "<br>",
+                   "Community: ", community, "<br>",
+                   "Degree: ", round(centrality, 3), "</p>")
+  )
+
+edges_df <- edges  
+edges_df$title <- paste0("Total Award: $", format(round(edges_df$weight, 2), big.mark=","), 
+                         "<br>Tenders: ", edges_df$tender_count)
+min_width <- 0.5  
+max_width <- 4    
+
+if(length(unique(edges_df$weight)) > 1) {
+  edges_df$width <- min_width + (max_width - min_width) * 
+    (edges_df$weight - min(edges_df$weight)) / (max(edges_df$weight) - min(edges_df$weight))
+} else {
+  edges_df$width <- (min_width + max_width) / 2
+}
+
+community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
+  visPhysics(solver = "forceAtlas2Based",
+             forceAtlas2Based = list(
+               gravitationalConstant = -50,  
+               centralGravity = 0.01,         
+               springLength = 100,           
+               springConstant = 0.08,         
+               avoidOverlap = 0.5            
+             ),
+             stabilization = list(
+               enabled = TRUE,
+               iterations = 1000,             
+               updateInterval = 50,
+               fit = TRUE
+             )) %>%
+  visNodes(scaling = list(min = 10, max = 30),
+           font = list(size = 12, color = "#333333"),
+           shadow = TRUE) %>%
+
+  visEdges(smooth = list(enabled = TRUE, type = "dynamic"),
+           arrows = list(to = FALSE, from = FALSE),
+           color = list(opacity = 0.5),  # Reduced opacity
+           width = "width",
+           hoverWidth = 1.5,
+           selectionWidth = 1.5) %>%
+
+  visInteraction(navigationButtons = TRUE,
+                 keyboard = TRUE,
+                 tooltipDelay = 100,
+                 hideEdgesOnDrag = TRUE) %>%
+
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+             selectedBy = list(variable = "group", main = "Select Community"),
+             height = "800px",
+             nodesIdSelection = TRUE)
+community_network
+```
+
+
+
+
+
+
+:::
+
+1. Main network visualization (test & show case the following) - Interactive Elements (Selection, Hover, Zoom) - Edge thickness prototype - Network layout algorithms prototype - Size nodes by degree centrality - Performance mode
 
 2.  Network details (Metrics table)
 
@@ -307,7 +2444,16 @@ Visualization Controls Implementation - Layout Selection - Node Sizing Options -
 
 Network Structure Insights Agency-Supplier Relationship Patterns Temporal Patterns in Procurement Networks Key Metrics and Their Distribution Layout Comparison Effects on Network Interpretation
 
-### 4.2 Community Detection sub-Module
+
+
+#### **4.3.2 Bar chart**
+
+The bar chart is designed to show
+
+1.  Intro & why
+2.  Design features
+3.  Functionality
+4.  Plot outcome
 
 *Visual Design* Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs) Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
 
@@ -332,3 +2478,5 @@ Parameter-Output Relationships: How each parameter affects the visualizations an
 ## 6. Next steps
 
 Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) \[Dataset\]. data.gov.sg. Retrieved March 30, 2025 from <https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view>
+
+https://bookdown.org/markhoff/social_network_analysis/network-visualization-and-aesthetics.html
