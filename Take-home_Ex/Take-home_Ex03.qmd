@@ -14,16 +14,18 @@ execute:
 
 ## 1. Overview
 
-Take-home exercise 4 is to showcase the prototyping for one of modules in the Visual Analytics group project - Track Singapore Public Dollars! Taxpayers would want to know where and how the govenment spend money on developing the country. The Singapore government procurement data is publicly available for everyone who would like to study it. However, with more than over 6K entries of data per year (on average), it is difficult for the public to decypher any insights. A visualisation tool we are developing aims to democratise the dataset to the public for this purpose. 
+Take-home exercise 4 showcases the prototyping for one module in our Visual Analytics group project: "Track Singapore Public Dollars!" Taxpayers want to know where and how the government spends money on developing the country. While Singapore government procurement data is publicly available, with over 6,000 entries per year (on average), it's difficult for the public to extract meaningful insights. Our visualization tool aims to democratize this dataset and make it accessible to the public.
 
-This assignment is divided into 2 segmens (webpages).
-1. Initial exploratory analysis (this is mainly to understand the structure of the dataset)
-2. Prototype: provides the various visualisation options that users may use and the storyboard for the **Network Insights Module.**
+This assignment is divided into 2 segments (webpages):
+
+1\. Initial exploratory analysis (primarily to understand the dataset structure)
+
+2\. Prototype: provides the various visualisation options and a storyboard for the **Network Insights Module.**
 
 ## 2. R Packages Evaluation
 
 | Purpose | R package | Description |
-|-----------------|---------------|----------------------------------------|
+|-----------------|-----------------|--------------------------------------|
 | Network visualisation | igraph | A package for network analysis and visualization |
 |  | visNetwork | An R interface to the 'vis.js' JavaScript library for interactive network visualization |
 | Other visualisation | ggplot2 | A powerful data visualization package based on the grammar of graphics |
@@ -76,13 +78,21 @@ glimpse(label_data)
 
 #### **3.2.1 Data cleaning**
 
-Before we conduct joint of the dataset, we want to have a quick exploratory data analysis to understand whether the dataset would need further processing before or after joining them. Please see section 3.2 for the preliminary EDA.
+Before joining the datasets, we conducted a quick exploratory data analysis to determine whether the data would need further processing before or after merging. Please see section 3.2 for the preliminary EDA.
 
-The insights we obtained from the EDA is that there are unknown entries for supplier_name with zero amount in awarded_amt. These are actually tenders that fail to have a successful bid. In this case, we will not include it in the network analysis.
+Our analysis revealed that some entries have "unknown" listed as the supplier_name with zero values in awarded_amt. These represent tenders that failed to receive a successful bid. We will exclude these entries from our network analysis.
 
-What we need to do during data wrangling is to convert dates into date type, filter out the entries that have no tender awarded, as well as add columns for Year, Month and Quarter, as we next may plan to use them for data range selection and analysis variables. During EDA, we find no missing values. So there is no need to handle this.
+During data wrangling, we will:
 
-In the code below, we will achieve these goals mentioned above.
+-   Convert dates to proper date type format
+
+-   Filter out entries with no awarded tenders
+
+-   Add columns for Year, Month, and Quarter to facilitate date range selection and temporal analysis
+
+Our EDA found no missing values, so no additional handling is needed for null values.
+
+The code below implements these data preparation steps.
 
 ```{r}
 #| code-fold: true
@@ -122,7 +132,7 @@ Note
 
 #### **3.2.2 Join data**
 
-In the earlier section, we have imported two datasets, one of which has the derived columns such as tender category from machine learning and agency type from the government definition. In this step, we will join these columns to be used in the Network Analysis.
+In the earlier section, we imported two datasets. One dataset contains derived columns such as tender category (from machine learning) and agency type (from government definitions). In this step, we will join these datasets to incorporate these derived columns for use in our Network Analysis.
 
 ```{r}
 #| code-fold: true
@@ -142,7 +152,7 @@ glimpse(network_w_type_data)
 
 #### **3.2.3 Create RDS file**
 
-Now, we will create a RDS file for Network module use. Within the code below, the related time fields are converted to date or numeric types for use. The agencies, suppliers are assigned a unique ID and type. Edges are created which defines the relationships between agencies and suppliers, and aggregate multiple tenders into single connections.
+Now, we will create an RDS file for use in the Network module. In the code below, we convert relevant time fields to date or numeric types. We assign unique IDs and types to both agencies and suppliers. We then create edges to define the relationships between agencies and suppliers, aggregating multiple tenders into single connections.
 
 ```{r}
 #| code-fold: true
@@ -285,7 +295,7 @@ The EDA is parked in a different page for reference. The purpose is to understan
 
 ### 4.1 Design thinking
 
-What I discovered about the network structure is that it is a directional dataset where the from node is always an agency and to node is always a supplier. This will construct an interesting network where the supplier nodes will be revolving the agency node. The communities are also easier to form with one or several agencies in the centre. Although this is the assumption, but this leads to separation of visualisation design that we will separate the overall network view and community network view.
+I discovered that our network has a directional structure, where the "from" node is always an agency and the "to" node is always a supplier. This creates an interesting network visualisation with supplier nodes revolving around agency nodes. Communities form more easily with one or several agencies at the center. Based on this observation, we've decided to separate our visualisation design into two distinct views: an overall network view and a community network view.
 
 ### 4.2 Network Module Architecture
 
@@ -301,7 +311,7 @@ In this module, 2 tabs are designed to illustrate a network overview and zoom-in
 
 #### **4.3.1 Network Plot**
 
-The network visualisation allows users to select date ranges and display methods to clearly see relationships between agencies and suppliers. Tooltips show important information like node names, number of contracts, and total award amounts, helping users quickly understand the key details about the connections they're viewing.
+The network visualisation allows users to select date ranges and display methods to clearly see relationships between agencies and suppliers. Tooltips display important information such as node names, number of contracts, and total award amounts, helping users quickly understand key details about the connections they're viewing.
 
 ::::: goals
 ::: goals-header
@@ -1252,7 +1262,7 @@ plot_ego_network(network_data, supplier)
 
 ### 4.4 Community Network Detection
 
-In this module, network community is the focus of the analysis. 2 tabs are designed to illustrate a community network overview and zoom-in view for a focused community.The communities are distinguished by colours. When user selects a community, the selection will sync to the **Community Explorer** tab. User can then zoom in to view the community members and their information.
+In this module, network community is the focus of the analysis. Two tabs are designed to illustrate a community network overview and zoom-in view for a focused community. The communities are distinguished by colours. When a user selects a community, the selection will sync to the **Community Explorer** tab. Users can then zoom in to view the community members and their information.
 
 ::::: goals
 ::: goals-header
@@ -1268,7 +1278,9 @@ Design features / functionality
 
 #### **Prototypes**
 
-**A. Community Detection algorithm** We want users to leverage different algorithm to best discover insights, so there are several options: Edge-betweeness, Louvain, Walkstrap, etc. Each may produce different numbers of communitites.
+**A. Community Detection algorithm**
+
+We want users to leverage different algorithms to best discover insights, so there are several options: Edge-betweenness, Louvain, Walktrap, etc. Each may produce different numbers of communities.
 
 ::: panel-tabset
 ## Edge-betweeness
@@ -1721,7 +1733,7 @@ community_network
 
 **B. Network Layout**
 
-Network layouts in community detection algorithms can reveal different structural aspects of a network, so as to provide complementary insights for analysis.
+Network layouts in community detection algorithms can reveal different structural aspects of a network, thereby providing complementary insights for analysis.
 
 -   **FR:** this method will naturally cluster densely connected nodes together, making community structures visually apparent. These layouts help identify major clusters
 
@@ -2417,17 +2429,19 @@ community_network
 
 ## 5. Storyboard / UI design
 
-Currently, the Network Analysis Module is developed into two sub-modules. The first one provides a Network overview for user's selected data range. The second offers network community detection methods, visualisations, as well as the metrics derived from the networks.
+Currently, the Network Analysis Module is developed into two sub-modules. The first provides a network overview for the user's selected date range. The second offers network community detection methods, visualisations, as well as metrics derived from the networks.
 
 ### 5.1 Network Overview
 
-In this Network Overview module, the application has 4 main sections (originally two, because the metrics tables now have their own tabs). The first section will consist of a Network visualisation board and its summary information. Through this, user is able to have a high level view of the entire network of Singapore agency procurement dynamics, and they can obtain the basic metrics of the network.
+The Network Overview module consists of four main sections that provide comprehensive insights into Singapore agency procurement dynamics:
 
-Under the second section of the application, it is the detailed metrics about the agencies, suppliers, as well as the top contracts within this network. Users can leverage this to subtract the data for further analysis.
+The first section features a Network visualisation board with summary information, offering users a high-level view of the entire procurement network and its basic metrics.
 
-The third section is to provide Ego Network visualisation in a focused view. User needs to click on one of the nodes from the first section, then it will lead the user to this section where an Ego Network is plotted, along with the summary information of this Ego Network.
+The second section presents detailed metrics about agencies, suppliers, and top contracts within the network. Users can leverage these metrics to extract data for further analysis.
 
-The fourth section offers the detailed metrics for the Ego Network plotted in the third section. It includes detailed information of the agencies, suppliers and connections within this Ego Network.
+The third section provides a focused Ego Network visualisation. When a user clicks on a node in the main network view (first section), they are directed to this section where an Ego Network is plotted along with relevant summary information.
+
+The fourth section displays detailed metrics for the selected Ego Network, including specific information about agencies, suppliers, and connections within this focused network view.
 
 ### Section One (Network Overview)
 
@@ -2435,9 +2449,9 @@ The fourth section offers the detailed metrics for the Ego Network plotted in th
 
 **Figure 1.1 Proposed network overview**
 
-The figure below show some of the interactive features that will be in the development of the Overview page. The main objective of this page is to allow users to have a full picture of the relationships spread.
+The figure below illustrates the interactive features that will be implemented in the Overview page development. The primary objective of this page is to provide users with a comprehensive view of relationship patterns within the procurement network.
 
-User is able to narrow down the agencies by selecting agency type first. They can also focus on certain category of procurement to analyse the networks.
+Users can refine their analysis by filtering agencies according to agency type. Additionally, they can focus on specific procurement categories to examine targeted network relationships. These interactive filtering capabilities enable more precise and relevant network analysis based on user requirements.
 
 ![](images/M3-section1-01.png)
 
@@ -2447,7 +2461,7 @@ User is able to narrow down the agencies by selecting agency type first. They ca
 
 **Figure 1.2 Proposed metrics layout for network overview**
 
-This is the proposed detailed metrics table for the network on the first section. Over here user can use keyword to search the data pertaining to agencies, suppliers and tenders. User is able to identify who are the top agencies, suppliers and contracts (by award amount) in this network. They can also leverage the data sorting feature.
+This is the proposed detailed metrics table for the network displayed in the first section. Within this interface, users can employ keyword searches to access specific data related to agencies, suppliers, and tenders. The table enables users to identify top-performing agencies, major suppliers, and significant contracts (ranked by award amount) within the network. Additionally, users can utilize the data sorting feature to organise information according to their analytical needs.
 
 ![](images/M3-section2-01.png){fig-align="center"}
 
@@ -2459,15 +2473,15 @@ The proposed layout for Ego Network is to have the visualisation on top of the s
 
 **Figure 1.3 Proposed Ego centric network layout for selected node**
 
-This section allows users to have a exclusive view of the selected node and all of its connections. The selected node is shown as a star shape. If the connected node is a supplier, they will show in a dot shape, and agencies will show in a diamond shape.
+This section provides users with an exclusive view of the selected node and all its direct connections, creating what is known as an ego-centric network visualisation. The focal node (ego) is distinctly represented as a star shape. Connected nodes are differentiated by shape: suppliers appear as dots, whilst agencies are displayed as diamonds.
 
-The labels are shown automatically. When users hover over the nodes and edges, they can get detailed information related to the node/edge. Note that the information for nodes are not just for the ego centric network. It is calculated using the selected network's data.
+Node labels are displayed by default for easy identification. Interactive functionality allows users to access detailed information by hovering over nodes and edges. Importantly, the metrics displayed for each node are not limited to the ego-centric network view but are calculated based on the node's position within the entire selected network dataset.
 
 ![](images/Ms-section4-01.png){fig-align="center"}
 
 ### Section Four (Ego Metrics)
 
-This section is to show a metric table for the Ego Network. The design is the same as the metric table for the main network. The difference is that this table shows a smaller sets of data as it's derived from the Ego Newtwork. The reason it's separated from the visualisation is to optimise user experience so that they do not have to scroll down to view the table as the page would become long.
+This section displays a metric table specifically for the Ego Network. It maintains the same design as the main network metric table but presents a more focused dataset derived from the Ego Network visualisation. The decision to separate this table from the visualisation was made to optimise user experience, preventing users from having to scroll down an excessively long page to view the tabular data.
 
 ![](images/M3-section4.png){fig-align="center"}
 
@@ -2475,13 +2489,13 @@ This section is to show a metric table for the Ego Network. The design is the sa
 
 ### 5.2 Community Network
 
-In this Network Overview module, the application has 3 main sections. It focuses solely on network community analysis. The design rationale is to have an overview of the network with colors to distinguish the communities identified by an algorithm. There are three sections dedicated to this module.
+In this Network Overview module, the application comprises 3 main sections, focusing exclusively on network community analysis. The design rationale employs colour-coded visualisation to distinguish communities identified by algorithmic analysis. The module is organised into three dedicated sections:
 
-The first section is the overview of network communities that shows the visualisation, basic metrics and a bar char visualisation to show community distribution.
+The first section provides an overview of network communities, featuring a colour-coded visualisation, basic metrics, and a bar chart representation of community distribution.
 
-The second section is to show the Ego community as selected by the user, and the important metrics is revealed in this page on the top.
+The second section displays the Ego community selected by the user, prominently revealing important metrics at the top of the page for immediate insight.
 
-The third is the metric table for the Ego community, showing the node, node type, and the metrics of the different centralities.
+The third section presents a metric table for the selected Ego community, with details on each node, node type, and various centrality metrics for comprehensive analysis.
 
 ### Section One (Community Network)
 
@@ -2489,11 +2503,11 @@ The third is the metric table for the Ego community, showing the node, node type
 
 **Figure 2.1 Proposed network community overview of the module**
 
-The figure below show some of the interactive features that are planned in the development of the overview page. The main objective is to provide users to have a good idea of the community spread within the data range. Users are able to leverage the control panel to define the data they want to use for analysis, including date range, agency type, agencies, supplies and tender type.
+The figure below illustrates the interactive features planned for the overview page development. The primary objective is to provide users with a comprehensive understanding of community distribution within the selected data range. Users can utilise the control panel to define their analytical dataset by specifying parameters such as date range, agency type, specific agencies, suppliers and tender type.
 
-They can also use the network visualisation settings to control the number of edges shown in the plot, the network layout and community detection methods, depending on the different needs.
+Additionally, users can adjust network visualisation settings to control the density of displayed edges, select preferred network layouts and choose from various community detection methods based on their analytical requirements.
 
-A synchronised view in the ***Community Explorer*** tab when user use the drop-down to highlight a community will be implemented. User will then be able to see the focused view of the selected community in ***Community Explorer*** tab.
+A synchronised view functionality will be implemented between the main overview and the ***Community Explorer*** tab. When users select a community using the drop-down menu to highlight it in the main view, they will simultaneously be able to examine a focused view of the selected community in the ***Community Explorer*** tab.
 
 ![](images/M3.2-section1.png){fig-align="center"}
 
