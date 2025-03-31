@@ -2444,6 +2444,8 @@ The fourth section offers the detailed metrics for the Ego Network plotted in th
 
 ![](images/M3-section1.png){fig-align="center"}
 
+**Figure 1.1 Proposed network overview**
+
 The figure below show some of the interactive features that will be in the development of the Overview page. The main objective of this page is to allow users to have a full picture of the relationships spread.
 
 User is able to narrow down the agencies by selecting agency type first. They can also focus on certain category of procurement to analyse the networks.
@@ -2453,6 +2455,8 @@ User is able to narrow down the agencies by selecting agency type first. They ca
 ### Section Two (Network Metrics)
 
 ![](images/M3-section2.png)
+
+**Figure 1.2 Proposed metrics layout for network overview**
 
 This is the proposed detailed metrics table for the network on the first section. Over here user can use keyword to search the data pertaining to agencies, suppliers and tenders. User is able to identify who are the top agencies, suppliers and contracts (by award amount) in this network. They can also leverage the data sorting feature.
 
@@ -2464,13 +2468,63 @@ The proposed layout for Ego Network is to have the visualisation on top of the s
 
 ![](images/M3-section3.png)
 
+**Figure 1.3 Proposed Ego centric network layout for selected node**
+
 This section allows users to have a exclusive view of the selected node and all of its connections. The selected node is shown as a star shape. If the connected node is a supplier, they will show in a dot shape, and agencies will show in a diamond shape.
+
+The labels are shown automatically. When users hover over the nodes and edges, they can get detailed information related to the node/edge. Note that the information for nodes are not just for the ego centric network. It is calculated using the selected network's data.
 
 ![](images/Ms-section4-01.png){fig-align="center"}
 
 ### Section Four (Ego Metrics)
 
+This section is to show a metric table for the Ego Network. The design is the same as the metric table for the main network. The difference is that this table shows a smaller sets of data as it's derived from the Ego Newtwork. The reason it's separated from the visualisation is to optimise user experience so that they do not have to scroll down to view the table as the page would become long.
+
+![](images/M3-section4.png){fig-align="center"}
+
+**Figure 1.3 Proposed metric table layout for the Ego centric network**
+
 ### 5.2 Community Network
+
+In this Network Overview module, the application has 3 main sections. It focuses solely on network community analysis. The design rationale is to have an overview of the network with colors to distinguish the communities identified by an algorithm. There are three sections dedicated to this module.
+
+The first section is the overview of network communities that shows the visualisation, basic metrics and a bar char visualisation to show community distribution.
+
+The second section is to show the Ego community as selected by the user, and the important metrics is revealed in this page on the top.
+
+The third is the metric table for the Ego community, showing the node, node type, and the metrics of the different centralities.
+
+### Section One (Community Network)
+
+![](images/M3.1-section1-01.png){fig-align="center"}
+
+**Figure 2.1 Proposed network community overview of the module**
+
+The figure below show some of the interactive features that are planned in the development of the overview page. The main objective is to provide users to have a good idea of the community spread within the data range. Users are able to leverage the control panel to define the data they want to use for analysis, including date range, agency type, agencies, supplies and tender type.
+
+They can also use the network visualisation settings to control the number of edges shown in the plot, the network layout and community detection methods, depending on the different needs.
+
+A synchronised view in the ***Community Explorer*** tab when user use the drop-down to highlight a community will be implemented. User will then be able to see the focused view of the selected community in ***Community Explorer*** tab.
+
+![](images/M3.2-section1.png){fig-align="center"}
+
+### Section Two (Community Ego Visualisation)
+
+![](images/M3.2-section2.png){fig-align="center"}
+
+**Figure 2.2 Proposed design for Ego network community view**
+
+Visualisation appears in this section appears when a community is selected using the dropdown in the ***Community Network Overview*** tab. All nodes within the community will be plotted.
+
+![](images/M3.2-section2-01.png){fig-align="center"}
+
+### Section Three (Community Members Metrics)
+
+![](images/M3.2-section3.png){fig-align="center"}
+
+**Figure 2.3 Proposed layout for the Ego community metric table**
+
+This section is to separate the metric table from the Ego community visualisation, showing the nodes and centrality information. Users can still toggle between different community and get a real-time update on the metrics.
 
 ## 6. Next steps
 
@@ -2479,3 +2533,7 @@ This section allows users to have a exclusive view of the selected node and all 
 Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) \[Dataset\]. data.gov.sg. Retrieved March 30, 2025 from <https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view>
 
 https://bookdown.org/markhoff/social_network_analysis/network-visualization-and-aesthetics.html
+
+<https://medium.com/data-science/community-detection-algorithms-9bd8951e7dae>
+
+Gibson, H., Faith, J., & Vickers, P. (2013). "A survey of two-dimensional graph layout techniques for information visualization." *Information Visualization*, 12(3-4), 324-357.
