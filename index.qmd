@@ -11,28 +11,32 @@ brand:
     foreground: grey
     primary: white
     
-listing:
-  field-display-names:
-    title: "Exercises"
-  contents:
-    - "Hands-on_Ex"
-    - "Take-home_Ex/*.qmd"
-#    - "In-class_Ex/*.qmd"
+# listing:
+#   field-display-names:
+#     title: "Exercises"
+#   contents:
+#     - "Hands-on_Ex"
+#     - "Take-home_Ex/*.qmd"
+# #    - "In-class_Ex/*.qmd"
 
-  type: grid
-  sort-ui: true 
-  sort: "date"
-  max-items: 3
-  image-height: 150 px
-  date-format: medium
-  grid-item-border: false
-  fields: [image, date, title, description]
+  # type: grid
+  # sort-ui: true 
+  # sort: "date"
+  # max-items: 3
+  # image-height: 150 px
+  # date-format: medium
+  # grid-item-border: false
+  # fields: [image, date, title, description]
 ---
 
-### **Welcome to Cathy's portfolio** ![](images/dino-rex-2%20copy.png){width="80"}
+### **Welcome to Cathy's portfolio** ![](images/dino-rex-2.png){width="100"}
 
-This webpage is a portfolio recording my course work for an Analytics course (ISSS608 Visual Analytics and Application) at Singapore Management University.
+This webpage serves as a portfolio showcasing my coursework for ISSS608 Visual Analytics and Application at Singapore Management University.
 
-In this website, you will find the exercises, assignments and projects published during the course. Welcome to connect with me to discuss questions and insights about analytics!
+![](images/Screenshot 2025-03-31 at 2.31.41 PM-01.png)
 
-### ![](images/dino-banner-sepline.png)
+Throughout this website, I share exercises, assignments and projects completed during the course. I welcome connections with visitors who wish to discuss analytics questions and insights.
+
+The course has introduced me to various data visualisation methods, with "R for Visual Analytics" serving as the primary textbook for these works. I extend my sincere thanks to Professor Kam for sharing his extensive knowledge and for his patience in guiding us through the Visual Analytics universe!
+
+### 
