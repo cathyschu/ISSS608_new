@@ -2460,6 +2460,14 @@ This is the proposed detailed metrics table for the network on the first section
 
 ### Section Three (Ego Network)
 
+The proposed layout for Ego Network is to have the visualisation on top of the summary metrics, similar to the main network section for consistent design.
+
+![](images/M3-section3.png)
+
+This section allows users to have a exclusive view of the selected node and all of its connections. The selected node is shown as a star shape. If the connected node is a supplier, they will show in a dot shape, and agencies will show in a diamond shape.
+
+![](images/Ms-section4-01.png){fig-align="center"}
+
 ### Section Four (Ego Metrics)
 
 ### 5.2 Community Network
