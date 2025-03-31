@@ -18,9 +18,9 @@ Take-home exercise 4 showcases the prototyping for one module in our Visual Anal
 
 This assignment is divided into 2 segments (webpages):
 
-1\. Initial exploratory analysis (primarily to understand the dataset structure)
+1\. Initial exploratory analysis (primarily to understand the dataset structure): [Here](https://cathyc.netlify.app/Take-home_Ex/Take-home_Ex03_2.html)
 
-2\. Prototype: provides the various visualisation options and a storyboard for the **Network Insights Module.**
+2\. Prototype: provides the various visualisation options and a storyboard for the **Network Insights Module** (this page)
 
 ## 2. R Packages Evaluation
 
@@ -289,7 +289,7 @@ network_data <- list(
 
 ### 3.2 EDA to understand the dataset
 
-The EDA is parked in a different page for reference. The purpose is to understand the general information of this dataset to process data cleaning and structuring.
+The EDA is parked in a [different page for reference](https://cathyc.netlify.app/Take-home_Ex/Take-home_Ex03_2.html). The purpose is to understand the general information of this dataset to process data cleaning and structuring.
 
 ## 4 Module design
 
