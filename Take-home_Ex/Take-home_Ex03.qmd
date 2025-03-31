@@ -14,15 +14,29 @@ execute:
 
 ## 1. Overview
 
-Brief overview of the application's purpose and key features Summary of prototyping process and results Key findings and recommendations for full development
+Take-home exercise 4 is to showcase the prototyping for one of modules in the Visual Analytics group project - Track Singapore Public Dollars! Taxpayers would want to know where and how the govenment spend money on developing the country. The Singapore government procurement data is publicly available for everyone who would like to study it. However, with more than over 6K entries of data per year (on average), it is difficult for the public to decypher any insights. A visualisation tool we are developing aims to democratise the dataset to the public for this purpose. 
 
-## 2. R Package Evaluation
+This assignment is divided into 2 segmens (webpages).
+1. Initial exploratory analysis (this is mainly to understand the structure of the dataset)
+2. Prototype: provides the various visualisation options that users may use and the storyboard for the **Network Insights Module.**
 
-Selected Packages and Justification
+## 2. R Packages Evaluation
 
-Network visualization packages: igraph, visNetwork Data manipulation: dplyr, tidyr Shiny components: shiny, shinydashboard Community detection: igraph algorithms Interactive tables: DT Date handling: lubridate
+| Purpose | R package | Description |
+|-----------------|---------------|----------------------------------------|
+| Network visualisation | igraph | A package for network analysis and visualization |
+|  | visNetwork | An R interface to the 'vis.js' JavaScript library for interactive network visualization |
+| Other visualisation | ggplot2 | A powerful data visualization package based on the grammar of graphics |
+|  | ggraph | An extension of ggplot2 for creating network/graph visualizations |
+| Data manipulation | tidyverse | A collection of R packages designed for data science that share a common philosophy and design |
+| Shiny components: | shiny | A web application framework for R to create interactive web applications |
+|  | shinydashboard | An extension of Shiny that provides components for creating dashboards |
+|  | shinyjs | Extends Shiny applications with JavaScript operations |
+| Interactive tables | DT | Provides an R interface to the JavaScript library DataTables for interactive data tables |
+| Date handling | lubridate | Provides functions for parsing, manipulating, and performing calculations with date-time data. |
+|  | rlang | A toolkit for working with core language features of R and the tidyverse |
 
-```{r}
+```{r echo=FALSE}
 pacman::p_load(tidyverse, dplyr, lubridate, tidyr)
 ```
 
@@ -234,7 +248,6 @@ monthly_edges_df <- GeBiz_processed %>%
     .groups = "drop"
   )
 
-# Create a months reference table for filtering
 months_table <- GeBiz_processed %>%
   distinct(year_month, award_year, month_num, month_name, month_index) %>%
   arrange(month_index) %>%
@@ -243,7 +256,6 @@ months_table <- GeBiz_processed %>%
     display_label = paste0(month_name, " ", award_year)
   )
 
-# Create agency_types data frame - explicit mapping between agencies and their types
 agency_types <- GeBiz_processed %>%
   distinct(agency, agency_type) %>%
   filter(!is.na(agency_type))
@@ -369,16 +381,13 @@ nodes_vis <- nodes %>%
     )
   )
 
-# Calculate and add degree centrality for node sizing
 graph <- igraph::graph_from_data_frame(
   d = data.frame(from = edges$agency, to = edges$supplier_name),
   directed = TRUE
 )
 
-# Calculate degree centrality
 degrees <- igraph::degree(graph, mode = "all")
 
-# Match degree values to nodes
 nodes_vis$degree <- 0  # Default value
 for(i in 1:nrow(nodes_vis)) {
   if(nodes_vis$id[i] %in% names(degrees)) {
@@ -386,7 +395,6 @@ for(i in 1:nrow(nodes_vis)) {
   }
 }
 
-# Scale node sizes based on degree
 if(length(unique(nodes_vis$degree)) > 1) {
   log_degrees <- log1p(nodes_vis$degree)
   nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
@@ -400,7 +408,6 @@ nodes_vis$title <- paste0(
   "<br>Connections: ", nodes_vis$degree
 )
 
-# Prepare edges for visualization
 edges_vis <- edges %>%
   mutate(
     from = agency,
@@ -417,7 +424,6 @@ edges_vis <- edges %>%
     )
   )
 
-# Create network visualization
 network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
   visNodes(
     shadow = TRUE
@@ -512,13 +518,11 @@ nodes_vis <- nodes %>%
     )
   )
 
-# Calculate and add degree centrality for node sizing
 graph <- igraph::graph_from_data_frame(
   d = data.frame(from = edges$agency, to = edges$supplier_name),
   directed = TRUE
 )
 
-# Calculate degree centrality
 degrees <- igraph::degree(graph, mode = "all")
 
 # Match degree values to nodes
@@ -529,7 +533,6 @@ for(i in 1:nrow(nodes_vis)) {
   }
 }
 
-# Scale node sizes based on degree
 if(length(unique(nodes_vis$degree)) > 1) {
   log_degrees <- log1p(nodes_vis$degree)
   nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
@@ -543,7 +546,6 @@ nodes_vis$title <- paste0(
   "<br>Connections: ", nodes_vis$degree
 )
 
-# Prepare edges for visualization
 edges_vis <- edges %>%
   mutate(
     from = agency,
@@ -560,7 +562,6 @@ edges_vis <- edges %>%
     )
   )
 
-# Create network visualization
 network_vis <- visNetwork(nodes_vis, edges_vis, width = "100%", height = "700px") %>%
   visNodes(
     shadow = TRUE
@@ -654,16 +655,13 @@ nodes_vis <- nodes %>%
     )
   )
 
-# Calculate and add degree centrality for node sizing
 graph <- igraph::graph_from_data_frame(
   d = data.frame(from = edges$agency, to = edges$supplier_name),
   directed = TRUE
 )
 
-# Calculate degree centrality
 degrees <- igraph::degree(graph, mode = "all")
 
-# Match degree values to nodes
 nodes_vis$degree <- 0  # Default value
 for(i in 1:nrow(nodes_vis)) {
   if(nodes_vis$id[i] %in% names(degrees)) {
@@ -938,16 +936,13 @@ nodes_vis <- nodes %>%
     )
   )
 
-# Calculate and add degree centrality for node sizing
 graph <- igraph::graph_from_data_frame(
   d = data.frame(from = edges$agency, to = edges$supplier_name),
   directed = TRUE
 )
 
-# Calculate degree centrality
 degrees <- igraph::degree(graph, mode = "all")
 
-# Match degree values to nodes
 nodes_vis$degree <- 0  # Default value
 for(i in 1:nrow(nodes_vis)) {
   if(nodes_vis$id[i] %in% names(degrees)) {
@@ -955,7 +950,6 @@ for(i in 1:nrow(nodes_vis)) {
   }
 }
 
-# Scale node sizes based on degree
 if(length(unique(nodes_vis$degree)) > 1) {
   log_degrees <- log1p(nodes_vis$degree)
   nodes_vis$size <- 10 + (log_degrees - min(log_degrees)) / 
@@ -1161,7 +1155,6 @@ plot_ego_network <- function(network_data, selected_node) {
   nodes <- network_data$nodes
   edges <- network_data$edges
   
-  # Get connections for the selected node
   if(selected_node %in% edges$supplier_name) {
     # use supplier
     ego_edges <- edges %>% filter(supplier_name == selected_node)
@@ -2213,24 +2206,20 @@ graph <- tbl_graph(
   directed = FALSE
 )
 
-# Add node type attribute
 graph <- graph %>%
   activate(nodes) %>%
   mutate(
     type = ifelse(name %in% unique(edges$from), "Agency", "Supplier")
   )
 
-# Detect communities using Louvain algorithm
 graph <- graph %>%
   activate(nodes) %>%
   mutate(community = as.factor(group_louvain()))
 
-# Calculate degree centrality
 graph <- graph %>%
   activate(nodes) %>%
   mutate(centrality = centrality_degree())
 
-# Prepare nodes for visNetwork
 nodes_df <- graph %>%
   activate(nodes) %>%
   as_tibble() %>%
@@ -2526,14 +2515,14 @@ Visualisation appears in this section appears when a community is selected using
 
 This section is to separate the metric table from the Ego community visualisation, showing the nodes and centrality information. Users can still toggle between different community and get a real-time update on the metrics.
 
-## 6. Next steps
-
 ## 7. References
 
-Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) \[Dataset\]. data.gov.sg. Retrieved March 30, 2025 from <https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view>
-
-https://bookdown.org/markhoff/social_network_analysis/network-visualization-and-aesthetics.html
-
-<https://medium.com/data-science/community-detection-algorithms-9bd8951e7dae>
-
 Gibson, H., Faith, J., & Vickers, P. (2013). "A survey of two-dimensional graph layout techniques for information visualization." *Information Visualization*, 12(3-4), 324-357.
+
+Hoffman, M. (2021). Methods for Network Analysis. In Social Network Analysis. <https://bookdown.org/markhoff/social_network_analysis/network-visualization-and-aesthetics.html>
+
+Jayawickrama, T. D. (2021, January 29). Community detection algorithms. Medium. <https://medium.com/data-science/community-detection-algorithms-9bd8951e7dae>
+
+Kam, T. S. (2023, December 4). R for Visual Analytics. https://r4va.netlify.app/
+
+Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) \[Dataset\]. data.gov.sg. Retrieved March 30, 2025 from <https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view>
