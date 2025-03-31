@@ -31,9 +31,9 @@ brand:
 
 ### **Welcome to Cathy's portfolio** ![](images/dino-rex-2.png){width="100"}
 
-This webpage serves as a portfolio showcasing my coursework for ISSS608 Visual Analytics and Application at Singapore Management University.
+![](images/index-pic.png)
 
-![](images/Screenshot 2025-03-31 at 2.31.41 PM-01.png)
+This webpage serves as a portfolio showcasing my coursework for ISSS608 Visual Analytics and Application at Singapore Management University.
 
 Throughout this website, I share exercises, assignments and projects completed during the course. I welcome connections with visitors who wish to discuss analytics questions and insights.
 
