@@ -1020,6 +1020,7 @@ network_vis
 :::
 
 #### **4.3.2 Ego centric plot**
+
 The Ego centric network visualisation allows users to zoom in to a selected node without distractions. Tooltips show important information like node names, type, number of contracts, and total award amounts, helping users quickly understand the key details about the connections they're viewing. There will also be a metric table providing detailed information of the nodes and edges.
 
 ::::: goals
@@ -1254,10 +1255,10 @@ supplier <- network_data$edges$agency[1]
 
 plot_ego_network(network_data, supplier)
 ```
-
 :::
 
 ### 4.4 Community Network Detection
+
 In this module, network community is the focus of the analysis. 2 tabs are designed to illustrate a community network overview and zoom-in view for a focused community.The communities are distinguished by colours. When user selects a community, the selection will sync to the **Community Explorer** tab. User can then zoom in to view the community members and their information.
 
 ::::: goals
@@ -1267,14 +1268,14 @@ Design features / functionality
 
 ::: goals-container
 -   Various methods for community detection
--   Community focus view: 
--   **Filtering and control panel**: Date range, Award amount, Agency type, Agency, Aupplier, Tender type, Maximun edges, Network layout, Commnity detection algorithm, 
-
+-   Community focus view:
+-   **Filtering and control panel**: Date range, Award amount, Agency type, Agency, Aupplier, Tender type, Maximun edges, Network layout, Commnity detection algorithm,
 :::
 :::::
 
-
 #### **Prototypes**
+
+**A. Community Detection algorithm** We want users to leverage different algorithm to best discover insights, so there are several options: Edge-betweeness, Louvain, Walkstrap, etc. Each may produce different numbers of communitites.
 
 ::: panel-tabset
 ## Edge-betweeness
@@ -1425,6 +1426,7 @@ community_network <- community_network %>%
 
 community_network
 ```
+
 ## Louvain
 
 ```{r}
@@ -1573,6 +1575,7 @@ community_network <- community_network %>%
 
 community_network
 ```
+
 ## Walktrap
 
 ```{r}
@@ -1721,15 +1724,23 @@ community_network <- community_network %>%
 
 community_network
 ```
-
-
 :::
 
-::: panel-tabset
+**B. Network Layout**
 
-Layout types
-We will use visNetwork's built-in layout options
+Network layouts in community detection algorithms can reveal different structural aspects of a network, so as to provide complementary insights for analysis.
+
+-   **FR:** this method will naturally cluster densely connected nodes together, making community structures visually apparent. These layouts help identify major clusters
+
+-   **Kamada-Kawai:** is excellent for revealing global structure in medium-size networks, like hundred to thousand nodes. This would fit our scenario when user filter the data range. It also helps identify central nodes and peripheral structures and lessl likely to create visual node overlaps, so it gives clarity for identifying boundary-spinning nodes.
+
+-   **DRL:** is Distributed Recursive Layout. it is designed to visualise very large graphs efficiently. It is good at revealing major community structures in large networks (tens of thousands to millions of nodes) and highliting community structure.
+
+-   **GraphOpt**: is another force-directed algorithm that optimises node positions to minimise edge crossings while keeping connected nodes close together. It helps identify community bridges and structural holes (gaps between densely connected groups). It is also effective at showing the flow of information or influence through a network.
+
+::: panel-tabset
 ## FR
+
 ```{r}
 #| code-fold: true
 #| code-summary: "Show the code"
@@ -2021,6 +2032,7 @@ community_network
 ```
 
 ## Kamada-Kawai (iGraph)
+
 ```{r}
 #| code-fold: true
 #| code-summary: "Show the code"
@@ -2152,7 +2164,6 @@ community_network <- community_network %>%
 
 community_network
 ```
-
 
 ## DrL
 
@@ -2288,7 +2299,6 @@ community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
 community_network
 ```
 
-
 ## GraphOpt
 
 ```{r}
@@ -2414,68 +2424,49 @@ community_network <- visNetwork(nodes = nodes_df, edges = edges_df) %>%
              nodesIdSelection = TRUE)
 community_network
 ```
-
-
-
-
-
-
 :::
-
-1. Main network visualization (test & show case the following) - Interactive Elements (Selection, Hover, Zoom) - Edge thickness prototype - Network layout algorithms prototype - Size nodes by degree centrality - Performance mode
-
-2.  Network details (Metrics table)
-
--   Show case the table - Agency, suppliers, top contracts
-
-3.  Ego Network Extraction and Visualization
-
--   Focal Node Highlighting (showcase the shape)
--   Connected Nodes Identification ()
--   Edge Filtering Logic
-
-4.  Ego network Data Tables and Metrics Components
-
-*Parameter Control Design* Filtering Controls Implementation - Date Range Selection - Entity Selection (Agencies, Suppliers) - Category and Amount Filters
-
-Visualization Controls Implementation - Layout Selection - Node Sizing Options - Edge Weight Representation - Performance Optimization Controls
-
-(Maybe) \#### 4.1.3 Exploratory Analysis Findings
-
-Network Structure Insights Agency-Supplier Relationship Patterns Temporal Patterns in Procurement Networks Key Metrics and Their Distribution Layout Comparison Effects on Network Interpretation
-
-
-
-#### **4.3.2 Bar chart**
-
-The bar chart is designed to show
-
-1.  Intro & why
-2.  Design features
-3.  Functionality
-4.  Plot outcome
-
-*Visual Design* Functionality and interactivity Shiny UI component selection (parameters) - Filter components (dateRangeInput, selectInput, etc.) - Control components (buttons, sliders, checkboxes) - Advanced input handling (typeahead search, conditional inputs) Explain the reasoning behind specific visualization choices (colors, shapes, sizes).
-
-Below is the outputs (code and show) 1. Community network (comparing & different parameter)
-
-2.  Community metrics
-
-3.  Community ego network (comparing & different parameter)
-
-4.  Ego metrics
-
-R Code Preparation and Testing: Algorithm implementation and comparison Community visualization approaches Performance testing with varying network sizes
-
-Parameters and Outputs Specification: Filtering parameters (date range, agency type/name, supplier, tender type) Visualization control parameters (layout, node size, edge weight) Analysis parameters (metrics, thresholds, community detection method)
-
-Application Outputs: Network visualizations (main network, ego network, community view) Data tables and metrics (network summary, node metrics, community statistics) Interactive elements (node selection, tooltips, export options)
-
-Parameter-Output Relationships: How each parameter affects the visualizations and analysis Reactive dependency structure
 
 ## 5. Storyboard / UI design
 
+Currently, the Network Analysis Module is developed into two sub-modules. The first one provides a Network overview for user's selected data range. The second offers network community detection methods, visualisations, as well as the metrics derived from the networks.
+
+### 5.1 Network Overview
+
+In this Network Overview module, the application has 4 main sections (originally two, because the metrics tables now have their own tabs). The first section will consist of a Network visualisation board and its summary information. Through this, user is able to have a high level view of the entire network of Singapore agency procurement dynamics, and they can obtain the basic metrics of the network.
+
+Under the second section of the application, it is the detailed metrics about the agencies, suppliers, as well as the top contracts within this network. Users can leverage this to subtract the data for further analysis.
+
+The third section is to provide Ego Network visualisation in a focused view. User needs to click on one of the nodes from the first section, then it will lead the user to this section where an Ego Network is plotted, along with the summary information of this Ego Network.
+
+The fourth section offers the detailed metrics for the Ego Network plotted in the third section. It includes detailed information of the agencies, suppliers and connections within this Ego Network.
+
+### Section One (Network Overview)
+
+![](images/M3-section1.png){fig-align="center"}
+
+The figure below show some of the interactive features that will be in the development of the Overview page. The main objective of this page is to allow users to have a full picture of the relationships spread.
+
+User is able to narrow down the agencies by selecting agency type first. They can also focus on certain category of procurement to analyse the networks.
+
+![](images/M3-section1-01.png)
+
+### Section Two (Network Metrics)
+
+![](images/M3-section2.png)
+
+This is the proposed detailed metrics table for the network on the first section. Over here user can use keyword to search the data pertaining to agencies, suppliers and tenders. User is able to identify who are the top agencies, suppliers and contracts (by award amount) in this network. They can also leverage the data sorting feature.
+
+![](images/M3-section2-01.png){fig-align="center"}
+
+### Section Three (Ego Network)
+
+### Section Four (Ego Metrics)
+
+### 5.2 Community Network
+
 ## 6. Next steps
+
+## 7. References
 
 Ministry of Finance. (2016). Government Procurement via GeBIZ (2024) \[Dataset\]. data.gov.sg. Retrieved March 30, 2025 from <https://data.gov.sg/datasets/d_acde1106003906a75c3fa052592f2fcb/view>
 
