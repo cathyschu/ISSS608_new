@@ -90,7 +90,11 @@ website:
         href: Take-home_Ex/Take-home_Ex03.qmd
       - text: "Take-home Exercise 3 (EDA)"
         href: Take-home_Ex/Take-home_Ex03_2.qmd
-    
+    - text: "**Project**"
+      menu:
+      - text: "Let's Track SG Public Dollars!"
+        href: https://cathyschu.shinyapps.io/TrackSGDollars/
+
 
 
   sidebar:
