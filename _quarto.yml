@@ -94,6 +94,8 @@ website:
       menu:
       - text: "Let's Track SG Public Dollars!"
         href: https://cathyschu.shinyapps.io/TrackSGDollars/
+      - text: "User Guide"
+        href: https://isss608-sgmoneytracker.netlify.app/UserGuide_v2.pdf 
 
 
 
