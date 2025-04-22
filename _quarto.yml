@@ -97,8 +97,6 @@ website:
       - text: "User Guide"
         href: https://isss608-sgmoneytracker.netlify.app/UserGuide_v2.pdf 
 
-
-
   sidebar:
     style: "docked"
     search: true
